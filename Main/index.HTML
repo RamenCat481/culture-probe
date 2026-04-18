@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數位文化探針包 (Hybrid)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800">
+    <div id="app" class="max-w-md mx-auto min-h-screen p-4">
+        
+        <div v-if="!user" class="flex flex-col items-center justify-center h-screen">
+            <h1 class="text-2xl font-bold mb-8 text-blue-600">☁️ 數位探針日誌</h1>
+            <button @click="login" class="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-full font-bold shadow-lg transition">
+                使用 Google 帳號開始
+            </button>
+        </div>
+
+        <div v-else>
+            <header class="flex justify-between items-center mb-6 border-b pb-4 mt-4">
+                <div>
+                    <h2 class="text-lg font-bold">你好，{{ user.displayName }}</h2>
+                    <p class="text-sm text-slate-500">探針任務進行中</p>
+                </div>
+                <button @click="logout" class="text-xs text-red-400 border border-red-100 px-2 py-1 rounded">登出</button>
+            </header>
+
+            <main class="space-y-6">
+                <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                    <h3 class="font-bold mb-3 flex items-center">☁️ 任務一：天空捕手</h3>
+                    <div class="relative border-2 border-dashed border-slate-200 rounded-xl p-4 text-center">
+                        <input type="file" accept="image/*" @change="handleFileSelect" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" :disabled="uploading">
+                        <div v-if="!currentPhotoBase64" class="text-slate-400 text-sm">
+                            {{ uploading ? '處理中...' : '點擊拍攝今日天空照片' }}
+                        </div>
+                        <img v-else :src="currentPhotoBase64" class="mx-auto h-32 rounded-lg shadow-md">
+                    </div>
+                    <p v-if="currentPhotoBase64" class="text-green-500 text-[10px] mt-2 text-center">✅ 照片已就緒（將存入 Google Drive）</p>
+                </section>
+
+                <section class="bg-blue-50 p-5 rounded-2xl border-2 border-blue-100">
+                    <h3 class="font-bold text-blue-800 flex items-center">💡 每日提問</h3>
+                    <p class="my-3 text-sm font-medium text-blue-900 leading-relaxed">{{ currentQuestion }}</p>
+                    <textarea v-model="answers.dailyQuestion" class="w-full rounded-xl p-3 text-sm border-0 shadow-inner" rows="3" placeholder="在這裡分享你的看法..."></textarea>
+                    
+                    <h3 class="font-bold text-blue-800 mt-6 mb-3">✍️ 每日小日記</h3>
+                    <textarea v-model="answers.diary" class="w-full rounded-xl p-3 text-sm border-0 shadow-inner" rows="3" placeholder="今天還有什麼想紀錄的嗎？"></textarea>
+                    
+                    <button @click="submitAll" :disabled="uploading || !currentPhotoBase64" class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold shadow-md transition disabled:bg-slate-300">
+                        {{ uploading ? '同步中...' : '儲存今日回饋 (Drive + Firestore)' }}
+                    </button>
+                </section>
+            </main>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAMHC3xDC0dDXdw8i31v-TT3wUvoddXQgs",
+      authDomain: "culture-probe-toolkit.firebaseapp.com",
+      projectId: "culture-probe-toolkit",
+      storageBucket: "culture-probe-toolkit.firebasestorage.app",
+      messagingSenderId: "918153683622",
+      appId: "1:918153683622:web:18398290da83ff9db30a67"
+    };
+
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzUREIji3lF-3500FlcYJLbuawBeNAcSaQFaF3lbUbW4DKUJ8LTdH0xX21G2gVIXXEO3w/exec"; 
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore(app);
+    const provider = new GoogleAuthProvider();
+
+    const { createApp, ref: vueRef, computed } = Vue;
+
+    createApp({
+        setup() {
+            const user = vueRef(null);
+            const uploading = vueRef(false);
+            const currentPhotoBase64 = vueRef("");
+            const answers = vueRef({ dailyQuestion: "", diary: "" });
+
+            const questions = [
+                "隨意問答：今天有什麼特別想紀錄的事情嗎？",
+                "一個月會出國多少次？去多少種不同的國家？",
+                "長期的不規律排班和跨時區時差，對日常帶來了哪些改變？通常如何調適？",
+                "客艙工作環境中真的有階級文化嗎？有哪些新人必懂的潛規則？",
+                "這份工作最無可取代的優點與最難以忍受的缺點分別為何？",
+                "在與不同國籍的組員共事時，是否有特別的規定或不成文的默契需要遵守？",
+                "經常需要在節假日排班或長期待在外站，這對維繫家庭關係、感情生活或社交圈，造成了什麼影響？"
+            ];
+
+            const currentQuestion = computed(() => questions[new Date().getDay()]);
+
+            onAuthStateChanged(auth, (u) => { user.value = u; });
+
+            const login = () => signInWithPopup(auth, provider);
+            const logout = () => { signOut(auth); user.value = null; };
+
+            const handleFileSelect = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => { currentPhotoBase64.value = e.target.result; };
+                reader.readAsDataURL(file);
+            };
+
+            const submitAll = async () => {
+                if (!user.value || !currentPhotoBase64.value) return;
+                uploading.value = true;
+
+                try {
+                    const timestamp = new Date().toLocaleDateString('zh-TW');
+
+                    // 1. 傳送照片到 Google Drive (透過 GAS)
+                    const drivePromise = fetch(GAS_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        body: JSON.stringify({
+                            userName: user.value.displayName,
+                            date: timestamp,
+                            photo: currentPhotoBase64.value,
+                            type: "photo_only" // 標記為僅存照片
+                        })
+                    });
+
+                    // 2. 傳送文字到 Firebase Firestore
+                    const firestorePromise = addDoc(collection(db, "probes"), {
+                        uid: user.value.uid,
+                        userName: user.value.displayName,
+                        date: timestamp,
+                        question: currentQuestion.value,
+                        answer: answers.value.dailyQuestion,
+                        diary: answers.value.diary,
+                        createdAt: serverTimestamp()
+                    });
+
+                    // 等待兩個任務完成
+                    await Promise.all([drivePromise, firestorePromise]);
+
+                    alert("✅ 儲存成功！\n文字已存入 Firestore，照片已同步至 Drive。");
+                    
+                    // 重置
+                    answers.value.dailyQuestion = "";
+                    answers.value.diary = "";
+                    currentPhotoBase64.value = "";
+                } catch (e) {
+                    console.error(e);
+                    alert("儲存失敗，請檢查網路或 Firebase 權限");
+                } finally {
+                    uploading.value = false;
+                }
+            };
+
+            return { user, login, logout, currentQuestion, answers, handleFileSelect, uploading, submitAll, currentPhotoBase64 };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
