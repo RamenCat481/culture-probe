@@ -35,24 +35,24 @@
                     <div class="relative border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center bg-slate-50 transition-colors hover:bg-slate-100">
                         <input type="file" accept="image/*" @change="handleFileSelect" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" :disabled="uploading">
                         <div v-if="!currentPhotoBase64" class="text-slate-400">
-                            <p class="text-sm">點擊拍攝或選擇照片</p>
-                            <p class="text-[10px] mt-1 text-slate-300">建議縮小照片以加速同步</p>
+                            <p class="text-sm font-medium">📷 點擊拍攝或選擇照片</p>
+                            <p class="text-[10px] mt-1 text-slate-300">請務必上傳一張天空的照片</p>
                         </div>
-                        <img v-else :src="currentPhotoBase64" class="mx-auto h-48 rounded-xl shadow-inner object-cover">
+                        <img v-else :src="currentPhotoBase64" class="mx-auto h-48 rounded-xl shadow-md object-cover">
                     </div>
-                    <p v-if="currentPhotoBase64" class="text-green-500 text-[10px] mt-2 text-center">✅ 照片預覽已就緒</p>
+                    <p v-if="currentPhotoBase64" class="text-green-500 text-[10px] mt-2 text-center">✅ 照片已準備好同步</p>
                 </section>
 
                 <section class="bg-blue-600 p-6 rounded-3xl shadow-lg text-white">
-                    <h3 class="font-bold flex items-center opacity-90">💡 每日提問</h3>
+                    <h3 class="font-bold flex items-center opacity-90 text-sm">💡 每日提問</h3>
                     <p class="my-4 text-base font-medium leading-relaxed">{{ currentQuestion }}</p>
-                    <textarea v-model="answers.dailyQuestion" class="w-full rounded-2xl p-4 text-sm border-0 text-slate-800 shadow-inner focus:ring-0" rows="3" placeholder="輸入您的觀察..."></textarea>
+                    <textarea v-model="answers.dailyQuestion" class="w-full rounded-2xl p-4 text-sm border-0 text-slate-800 shadow-inner focus:ring-0" rows="3" placeholder="在這裡輸入您的觀察..."></textarea>
                     
-                    <h3 class="font-bold mt-6 mb-3 opacity-90">✍️ 每日小日記</h3>
+                    <h3 class="font-bold mt-6 mb-3 opacity-90 text-sm">✍️ 每日小日記</h3>
                     <textarea v-model="answers.diary" class="w-full rounded-2xl p-4 text-sm border-0 text-slate-800 shadow-inner focus:ring-0" rows="3" placeholder="今天還有什麼想紀錄的嗎？"></textarea>
                     
-                    <button @click="submitData" :disabled="uploading || !currentPhotoBase64" class="mt-8 w-full bg-white text-blue-600 py-4 rounded-2xl font-black shadow-xl transition-all active:scale-95 disabled:bg-blue-400 disabled:text-white disabled:shadow-none">
-                        {{ uploading ? '同步資料中...' : '同步並儲存今日回饋' }}
+                    <button @click="submitData" :disabled="uploading || !currentPhotoBase64" class="mt-8 w-full bg-white text-blue-600 py-4 rounded-2xl font-black shadow-xl transition-all active:scale-95 disabled:bg-blue-300 disabled:text-white">
+                        {{ uploading ? '正在同步雲端...' : '確認並儲存今日回饋' }}
                     </button>
                 </section>
             </main>
@@ -63,7 +63,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-    // ⚠️ 請確認 Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAMHC3xDC0dDXdw8i31v-TT3wUvoddXQgs",
       authDomain: "culture-probe-toolkit.firebaseapp.com",
@@ -73,7 +72,7 @@
       appId: "1:918153683622:web:18398290da83ff9db30a67"
     };
 
-    // ⚠️ 請填入最新部署的 GAS 網址
+    // ⚠️ 這是你目前最新的 GAS 網址
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzUREIji3lF-3500FlcYJLbuawBeNAcSaQFaF3lbUbW4DKUJ8LTdH0xX21G2gVIXXEO3w/exec"; 
 
     const app = initializeApp(firebaseConfig);
@@ -119,6 +118,7 @@
                 uploading.value = true;
                 
                 try {
+                    // 將所有資料一次傳給 GAS
                     await fetch(GAS_URL, {
                         method: "POST",
                         mode: "no-cors",
@@ -128,15 +128,18 @@
                             question: currentQuestion.value,
                             answer: answers.value.dailyQuestion,
                             diary: answers.value.diary,
-                            photo: currentPhotoBase64.value
+                            photo: currentPhotoBase64.value // 修正這裡的抓取邏輯
                         })
                     });
-                    alert("同步成功！您可以前往雲端硬碟確認囉 ✨");
+
+                    alert("🎉 資料已成功同步至專屬工作表與資料夾！");
+                    
+                    // 清空欄位
                     answers.value.dailyQuestion = "";
                     answers.value.diary = "";
                     currentPhotoBase64.value = "";
                 } catch (e) {
-                    alert("同步時發生錯誤");
+                    alert("同步失敗，請檢查網路連線");
                 } finally {
                     uploading.value = false;
                 }
