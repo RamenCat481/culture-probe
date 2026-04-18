@@ -142,31 +142,40 @@
             };
 
             // 儲存文字與狀態到 Firebase Firestore
-            const submitToFirestore = async () => {
-                if (!user.value) return;
-                try {
-                    const today = new Date().toLocaleDateString('en-CA'); 
-                    await setDoc(doc(db, "responses", `${user.value.uid}_${today}`), {
-                        uid: user.value.uid,
+             const submitToFirestore = async () => {
+            if (!user.value || !currentPhotoBase64) return;
+    
+            uploading.value = true;
+            try {
+                const today = new Date().toLocaleDateString('zh-TW');
+        
+                // 同時將文字與照片傳給 GAS
+                await fetch(GAS_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    body: JSON.stringify({
                         userName: user.value.displayName,
                         date: today,
                         question: currentQuestion.value,
                         answer: answers.value.dailyQuestion,
                         diary: answers.value.diary,
-                        hasPhotoInDrive: true, // 標記照片已存入 Drive
-                        timestamp: new Date()
-                    });
-                    alert("今日任務全部完成！感謝參與 ✨");
-                    // 重置
-                    answers.value.dailyQuestion = "";
-                    answers.value.diary = "";
-                    currentPhotoUrl.value = "";
-                } catch (e) {
-                    console.error(e);
-                    alert("文字儲存失敗");
-                }
-            };
+                        photo: currentPhotoBase64 // 這是照片的 Base64 字串
+                    })
+                });
 
+        // 這裡可以保留 Firebase 的備份，或者只用 GAS
+        alert("資料已同步至您的 Google 試算表與 Drive！✨");
+        
+        // 重置欄位
+        answers.value.dailyQuestion = "";
+        answers.value.diary = "";
+        currentPhotoUrl.value = "";
+    } catch (e) {
+        alert("同步失敗");
+    } finally {
+        uploading.value = false;
+    }
+};
             return { 
                 user, login, logout, currentQuestion, 
                 answers, handleFileSelect, uploading, submitToFirestore, currentPhotoUrl 
