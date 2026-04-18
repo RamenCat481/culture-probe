@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數位文化探針包</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body class="bg-slate-50 text-slate-800">
+    <div id="app" class="max-w-md mx-auto min-h-screen p-4">
+        
+        <div v-if="!user" class="flex flex-col items-center justify-center h-screen">
+            <h1 class="text-2xl font-bold mb-8 text-blue-600">☁️ 數位探針日誌</h1>
+            <button @click="login" class="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-full font-bold shadow-lg transition">
+                使用 Google 帳號開始
+            </button>
+        </div>
+
+        <div v-else>
+            <header class="flex justify-between items-center mb-6 border-b pb-4">
+                <div>
+                    <h2 class="text-lg font-bold">你好，{{ user.displayName }}</h2>
+                    <p class="text-sm text-slate-500">今天是任務的第 {{ dayCount }} 天</p>
+                </div>
+                <button @click="logout" class="text-xs text-red-400 border border-red-100 px-2 py-1 rounded">登出</button>
+            </header>
+
+            <main class="space-y-6">
+                <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                    <h3 class="font-bold mb-3 flex items-center">☁️ 任務一：天空捕手 <span class="ml-2 text-xs bg-red-100 text-red-500 px-2 py-0.5 rounded">必填</span></h3>
+                    <div class="relative border-2 border-dashed border-slate-200 rounded-xl p-4 text-center">
+                        <input type="file" accept="image/*" @change="uploadSkyPhoto" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                        <div v-if="!currentPhotoUrl" class="text-slate-400 text-sm">點擊或拖拽照片至此</div>
+                        <img v-else :src="currentPhotoUrl" class="mx-auto h-32 rounded-lg shadow-md">
+                    </div>
+                    <p v-if="uploading" class="text-blue-500 text-xs mt-2 animate-pulse">正在傳送到雲端...</p>
+                    <p v-if="currentPhotoUrl" class="text-green-500 text-xs mt-2">✅ 照片已就緒</p>
+                </section>
+
+                <section class="bg-blue-50 p-5 rounded-2xl border-2 border-blue-100">
+                    <h3 class="font-bold text-blue-800 flex items-center">💡 每日提問</h3>
+                    <p class="my-3 text-sm font-medium text-blue-900 leading-relaxed">{{ currentQuestion }}</p>
+                    <textarea v-model="answers.dailyQuestion" class="w-full rounded-xl p-3 text-sm border-0 focus:ring-2 focus:ring-blue-400 shadow-inner" rows="4" placeholder="在這裡分享你的看法..."></textarea>
+                    
+                    <h3 class="font-bold text-blue-800 mt-6 mb-3">✍️ 每日小日記 (不限字數)</h3>
+                    <textarea v-model="answers.diary" class="w-full rounded-xl p-3 text-sm border-0 focus:ring-2 focus:ring-blue-400 shadow-inner" rows="4" placeholder="今天還有什麼想紀錄的大小事嗎？"></textarea>
+                    
+                    <button @click="submitAnswers" :disabled="uploading" class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold shadow-md transition disabled:bg-slate-300">
+                        同步並儲存今日回饋
+                    </button>
+                </section>
+            </main>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAMHC3xDC0dDXdw8i31v-TT3wUvoddXQgs",
+      authDomain: "culture-probe-toolkit.firebaseapp.com",
+      projectId: "culture-probe-toolkit",
+      storageBucket: "culture-probe-toolkit.firebasestorage.app",
+      messagingSenderId: "918153683622",
+      appId: "1:918153683622:web:18398290da83ff9db30a67",
+      measurementId: "G-7MRGH9KL8B"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore();
+    const storage = getStorage();
+    const provider = new GoogleAuthProvider();
+
+    const { createApp, ref: vueRef, computed } = Vue;
+
+    createApp({
+        setup() {
+            const user = vueRef(null);
+            const uploading = vueRef(false);
+            const currentPhotoUrl = vueRef(""); // 儲存照片網址
+            const dayCount = vueRef(1); 
+            const answers = vueRef({ dailyQuestion: "", diary: "" });
+
+            const questions = [
+                "一個月會出國多少次？去多少種不同的國家？",
+                "長期的不規律排班和跨時區時差，對日常帶來了哪些改變？通常如何調適？",
+                "客艙工作環境中真的有階級文化嗎？有哪些新人必懂的潛規則？",
+                "這份工作最無可取代的優點與最難以忍受的缺點分別為何？",
+                "在與不同國籍的組員共事時，是否有特別的規定或不成文的默契需要遵守？",
+                "經常需要在節假日排班或長期待在外站，這對維繫家庭關係、感情生活或社交圈，造成了什麼影響？",
+                "隨意問答：今天有什麼特別想紀錄的事情嗎？"
+            ];
+
+            const currentQuestion = computed(() => questions[(dayCount.value - 1) % questions.length]);
+
+            onAuthStateChanged(auth, (u) => { user.value = u; });
+
+            const login = () => signInWithPopup(auth, provider);
+            const logout = () => { signOut(auth); user.value = null; };
+
+            // 1. 修改：上傳照片並立刻取得網址
+            const uploadSkyPhoto = async (event) => {
+                const file = event.target.files[0];
+                if (!file || !user.value) return;
+
+                uploading.value = true;
+                try {
+                    const storageRef = ref(storage, `probes/${user.value.uid}/${Date.now()}_${file.name}`);
+                    const snapshot = await uploadBytes(storageRef, file);
+                    // 取得下載連結
+                    const url = await getDownloadURL(snapshot.ref);
+                    currentPhotoUrl.value = url; 
+                    alert("天空已成功捕獲！☁️");
+                } catch (e) {
+                    console.error(e);
+                    alert("照片上傳失敗");
+                } finally {
+                    uploading.value = false;
+                }
+            };
+
+            // 2. 修改：儲存時包含照片連結
+            const submitAnswers = async () => {
+                if (!user.value) return;
+                if (!currentPhotoUrl.value) {
+                    alert("別忘了拍一張今天的天空喔！");
+                    return;
+                }
+                
+                try {
+                    const today = new Date().toLocaleDateString('en-CA'); // 格式為 YYYY-MM-DD
+                    await setDoc(doc(db, "responses", `${user.value.uid}_${today}`), {
+                        uid: user.value.uid,
+                        userName: user.value.displayName,
+                        date: today,
+                        question: currentQuestion.value,
+                        answer: answers.value.dailyQuestion,
+                        diary: answers.value.diary,
+                        skyPhotoUrl: currentPhotoUrl.value, // 同步照片網址
+                        timestamp: new Date()
+                    });
+                    alert("同步成功！感謝參與 ✨");
+                    // 儲存後清空文字，準備明天
+                    answers.value.dailyQuestion = "";
+                    answers.value.diary = "";
+                    currentPhotoUrl.value = "";
+                } catch (e) {
+                    console.error(e);
+                    alert("儲存失敗");
+                }
+            };
+
+            return { 
+                user, login, logout, dayCount, currentQuestion, 
+                answers, uploadSkyPhoto, uploading, submitAnswers, currentPhotoUrl 
+            };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
