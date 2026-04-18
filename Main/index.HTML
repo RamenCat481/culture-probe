@@ -10,46 +10,49 @@
 <body class="bg-slate-50 text-slate-800">
     <div id="app" class="max-w-md mx-auto min-h-screen p-4">
         
-        <div v-if="!user" class="flex flex-col items-center justify-center h-screen">
-            <h1 class="text-2xl font-bold mb-8 text-blue-600">☁️ 數位探針日誌</h1>
-            <button @click="login" class="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-full font-bold shadow-lg transition">
-                使用 Google 帳號開始
-            </button>
+        <div v-if="!user" class="flex flex-col items-center justify-center h-screen text-center">
+            <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100">
+                <h1 class="text-3xl font-bold mb-2 text-blue-600">☁️ 天空探針</h1>
+                <p class="text-slate-400 mb-8">數位文化探針研究工具</p>
+                <button @click="login" class="bg-blue-500 hover:bg-blue-600 text-white px-8 py-3 rounded-full font-bold shadow-lg transition-all active:scale-95">
+                    使用 Google 帳號開始
+                </button>
+            </div>
         </div>
 
         <div v-else>
-            <header class="flex justify-between items-center mb-6 border-b pb-4">
+            <header class="flex justify-between items-center mb-6 border-b pb-4 mt-4">
                 <div>
-                    <h2 class="text-lg font-bold">你好，{{ user.displayName }}</h2>
-                    <p class="text-sm text-slate-500">探針任務進行中</p>
+                    <h2 class="text-lg font-bold text-slate-700">你好，{{ user.displayName }}</h2>
+                    <p class="text-xs text-slate-400">目前位置：數位探針包</p>
                 </div>
-                <button @click="logout" class="text-xs text-red-400 border border-red-100 px-2 py-1 rounded">登出</button>
+                <button @click="logout" class="text-xs text-red-400 bg-red-50 px-3 py-1 rounded-full border border-red-100">登出</button>
             </header>
 
             <main class="space-y-6">
-                <section class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                    <h3 class="font-bold mb-3 flex items-center">☁️ 任務一：天空捕手</h3>
-                    <div class="relative border-2 border-dashed border-slate-200 rounded-xl p-4 text-center">
+                <section class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
+                    <h3 class="font-bold mb-3 text-slate-700 flex items-center">☁️ 任務一：天空捕手</h3>
+                    <div class="relative border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center bg-slate-50 transition-colors hover:bg-slate-100">
                         <input type="file" accept="image/*" @change="handleFileSelect" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" :disabled="uploading">
-                        <div v-if="!currentPhotoUrl" class="text-slate-400 text-sm">
-                            {{ uploading ? '處理中...' : '點擊拍攝或選擇天空照片' }}
+                        <div v-if="!currentPhotoBase64" class="text-slate-400">
+                            <p class="text-sm">點擊拍攝或選擇照片</p>
+                            <p class="text-[10px] mt-1 text-slate-300">建議縮小照片以加速同步</p>
                         </div>
-                        <img v-else :src="currentPhotoUrl" class="mx-auto h-32 rounded-lg shadow-md">
+                        <img v-else :src="currentPhotoBase64" class="mx-auto h-48 rounded-xl shadow-inner object-cover">
                     </div>
-                    <p v-if="uploading" class="text-blue-500 text-xs mt-2 animate-pulse text-center">正在同步至 Google Drive...</p>
-                    <p v-if="currentPhotoUrl && !uploading" class="text-green-500 text-xs mt-2 text-center">✅ 照片已安全存入雲端硬碟</p>
+                    <p v-if="currentPhotoBase64" class="text-green-500 text-[10px] mt-2 text-center">✅ 照片預覽已就緒</p>
                 </section>
 
-                <section class="bg-blue-50 p-5 rounded-2xl border-2 border-blue-100">
-                    <h3 class="font-bold text-blue-800 flex items-center">💡 每日提問</h3>
-                    <p class="my-3 text-sm font-medium text-blue-900 leading-relaxed">{{ currentQuestion }}</p>
-                    <textarea v-model="answers.dailyQuestion" class="w-full rounded-xl p-3 text-sm border-0 focus:ring-2 focus:ring-blue-400 shadow-inner" rows="3" placeholder="在這裡分享你的看法..."></textarea>
+                <section class="bg-blue-600 p-6 rounded-3xl shadow-lg text-white">
+                    <h3 class="font-bold flex items-center opacity-90">💡 每日提問</h3>
+                    <p class="my-4 text-base font-medium leading-relaxed">{{ currentQuestion }}</p>
+                    <textarea v-model="answers.dailyQuestion" class="w-full rounded-2xl p-4 text-sm border-0 text-slate-800 shadow-inner focus:ring-0" rows="3" placeholder="輸入您的觀察..."></textarea>
                     
-                    <h3 class="font-bold text-blue-800 mt-6 mb-3">✍️ 每日小日記</h3>
-                    <textarea v-model="answers.diary" class="w-full rounded-xl p-3 text-sm border-0 focus:ring-2 focus:ring-blue-400 shadow-inner" rows="3" placeholder="今天還有什麼想紀錄的嗎？"></textarea>
+                    <h3 class="font-bold mt-6 mb-3 opacity-90">✍️ 每日小日記</h3>
+                    <textarea v-model="answers.diary" class="w-full rounded-2xl p-4 text-sm border-0 text-slate-800 shadow-inner focus:ring-0" rows="3" placeholder="今天還有什麼想紀錄的嗎？"></textarea>
                     
-                    <button @click="submitToFirestore" :disabled="uploading || !currentPhotoUrl" class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold shadow-md transition disabled:bg-slate-300">
-                        儲存今日所有回饋
+                    <button @click="submitData" :disabled="uploading || !currentPhotoBase64" class="mt-8 w-full bg-white text-blue-600 py-4 rounded-2xl font-black shadow-xl transition-all active:scale-95 disabled:bg-blue-400 disabled:text-white disabled:shadow-none">
+                        {{ uploading ? '同步資料中...' : '同步並儲存今日回饋' }}
                     </button>
                 </section>
             </main>
@@ -59,8 +62,8 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+    // ⚠️ 請確認 Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyAMHC3xDC0dDXdw8i31v-TT3wUvoddXQgs",
       authDomain: "culture-probe-toolkit.firebaseapp.com",
@@ -70,11 +73,11 @@
       appId: "1:918153683622:web:18398290da83ff9db30a67"
     };
 
+    // ⚠️ 請填入最新部署的 GAS 網址
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzUREIji3lF-3500FlcYJLbuawBeNAcSaQFaF3lbUbW4DKUJ8LTdH0xX21G2gVIXXEO3w/exec"; 
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth();
-    const db = getFirestore();
     const provider = new GoogleAuthProvider();
 
     const { createApp, ref: vueRef, computed } = Vue;
@@ -83,103 +86,63 @@
         setup() {
             const user = vueRef(null);
             const uploading = vueRef(false);
-            const currentPhotoUrl = vueRef(""); // 存 Drive 的連結
+            const currentPhotoBase64 = vueRef("");
             const answers = vueRef({ dailyQuestion: "", diary: "" });
 
             const questions = [
+                "隨意問答：今天有什麼特別想紀錄的事情嗎？",
                 "一個月會出國多少次？去多少種不同的國家？",
                 "長期的不規律排班和跨時區時差，對日常帶來了哪些改變？通常如何調適？",
                 "客艙工作環境中真的有階級文化嗎？有哪些新人必懂的潛規則？",
                 "這份工作最無可取代的優點與最難以忍受的缺點分別為何？",
                 "在與不同國籍的組員共事時，是否有特別的規定或不成文的默契需要遵守？",
-                "經常需要在節假日排班或長期待在外站，這對維繫家庭關係、感情生活或社交圈，造成了什麼影響？",
-                "隨意問答：今天有什麼特別想紀錄的事情嗎？"
+                "經常需要在節假日排班或長期待在外站，這對維繫家庭關係、感情生活或社交圈，造成了什麼影響？"
             ];
 
-            const currentQuestion = computed(() => {
-                const day = new Date().getDay(); // 根據禮拜幾自動換題
-                return questions[day % questions.length];
-            });
+            const currentQuestion = computed(() => questions[new Date().getDay()]);
 
             onAuthStateChanged(auth, (u) => { user.value = u; });
 
             const login = () => signInWithPopup(auth, provider);
             const logout = () => { signOut(auth); user.value = null; };
 
-            // 處理照片：轉 Base64 並傳給 Google Drive (GAS)
-            const handleFileSelect = async (event) => {
+            const handleFileSelect = (event) => {
                 const file = event.target.files[0];
-                if (!file || !user.value) return;
-
+                if (!file) return;
                 const reader = new FileReader();
-                reader.onload = async (e) => {
-                    const base64Data = e.target.result;
-                    uploading.value = true;
-                    
-                    try {
-                        const response = await fetch(GAS_URL, {
-                            method: "POST",
-                            mode: "no-cors", // 重要：解決 GAS 的跨域問題
-                            body: JSON.stringify({
-                                photo: base64Data,
-                                userName: user.value.displayName,
-                                date: new Date().toLocaleDateString('zh-TW')
-                            })
-                        });
-                        
-                        // 註：因為 no-cors 模式拿不到回傳網址，我們顯示成功訊息即可
-                        // 照片會直接進你的 Google Drive 資料夾
-                        currentPhotoUrl.value = base64Data; // 暫時用 Base64 做畫面預覽
-                        alert("照片已排隊上傳至雲端硬碟！☁️");
-                    } catch (err) {
-                        console.error(err);
-                        alert("上傳至 Drive 失敗，請檢查 GAS 設定");
-                    } finally {
-                        uploading.value = false;
-                    }
-                };
+                reader.onload = (e) => { currentPhotoBase64.value = e.target.result; };
                 reader.readAsDataURL(file);
             };
 
-            // 儲存文字與狀態到 Firebase Firestore
-             const submitToFirestore = async () => {
-            if (!user.value || !currentPhotoBase64) return;
-    
-            uploading.value = true;
-            try {
-                const today = new Date().toLocaleDateString('zh-TW');
-        
-                // 同時將文字與照片傳給 GAS
-                await fetch(GAS_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    body: JSON.stringify({
-                        userName: user.value.displayName,
-                        date: today,
-                        question: currentQuestion.value,
-                        answer: answers.value.dailyQuestion,
-                        diary: answers.value.diary,
-                        photo: currentPhotoBase64 // 這是照片的 Base64 字串
-                    })
-                });
-
-        // 這裡可以保留 Firebase 的備份，或者只用 GAS
-        alert("資料已同步至您的 Google 試算表與 Drive！✨");
-        
-        // 重置欄位
-        answers.value.dailyQuestion = "";
-        answers.value.diary = "";
-        currentPhotoUrl.value = "";
-    } catch (e) {
-        alert("同步失敗");
-    } finally {
-        uploading.value = false;
-    }
-};
-            return { 
-                user, login, logout, currentQuestion, 
-                answers, handleFileSelect, uploading, submitToFirestore, currentPhotoUrl 
+            const submitData = async () => {
+                if (!user.value || !currentPhotoBase64.value) return;
+                uploading.value = true;
+                
+                try {
+                    await fetch(GAS_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        body: JSON.stringify({
+                            userName: user.value.displayName,
+                            date: new Date().toLocaleDateString('zh-TW'),
+                            question: currentQuestion.value,
+                            answer: answers.value.dailyQuestion,
+                            diary: answers.value.diary,
+                            photo: currentPhotoBase64.value
+                        })
+                    });
+                    alert("同步成功！您可以前往雲端硬碟確認囉 ✨");
+                    answers.value.dailyQuestion = "";
+                    answers.value.diary = "";
+                    currentPhotoBase64.value = "";
+                } catch (e) {
+                    alert("同步時發生錯誤");
+                } finally {
+                    uploading.value = false;
+                }
             };
+
+            return { user, login, logout, currentQuestion, answers, handleFileSelect, uploading, submitData, currentPhotoBase64 };
         }
     }).mount('#app');
 </script>
