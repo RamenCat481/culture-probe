@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script>
-        // 初始化 Tailwind 暗色模式配置
         tailwind.config = {
             darkMode: 'class',
         }
@@ -25,8 +24,8 @@
         .animate-bounce-in { animation: bounce-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     </style>
 </head>
-<body :class="isDark ? 'dark' : ''" class="transition-colors duration-300">
-    <div id="app" class="bg-[#F8FAFC] dark:bg-[#0F172A] text-slate-800 dark:text-slate-200 no-select font-sans min-h-screen">
+<body class="transition-colors duration-300">
+    <div id="app" class="min-h-screen bg-[#F8FAFC] dark:bg-[#0F172A] text-slate-800 dark:text-slate-200 no-select font-sans">
         <div class="max-w-md mx-auto p-6 pb-24">
             
             <div v-if="!user" class="flex flex-col items-center justify-center h-[80vh] text-center">
@@ -146,7 +145,7 @@
 
                 <div v-if="showSettings" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-6 backdrop-blur-sm">
                     <div class="bg-white dark:bg-slate-800 w-full max-w-xs rounded-[2.5rem] p-8 shadow-2xl text-center">
-                        <h3 class="font-black text-xl mb-6 dark:text-white">實驗室控制台</h3>
+                        <h3 class="font-black text-xl mb-6 dark:text-white text-slate-900">實驗室控制台</h3>
                         <div class="grid grid-cols-4 gap-2 mb-8">
                             <button v-for="d in 7" @click="setDay(d)" class="py-3 rounded-xl text-xs font-black transition-all" :class="currentDayNumber === d ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-400'">D{{d}}</button>
                         </div>
@@ -202,11 +201,30 @@
             const manualOffset = vueRef(parseInt(localStorage.getItem('exp_offset')) || 0);
             const usedImages = vueRef(JSON.parse(localStorage.getItem('used_images')) || []);
 
-            // 切換主題邏輯
+            // 💡 主題切換邏輯修正：同步操作 document.documentElement 的 class
+            const applyTheme = (dark) => {
+                if (dark) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            };
+
             const toggleTheme = () => {
                 isDark.value = !isDark.value;
                 localStorage.setItem('theme', isDark.value ? 'dark' : 'light');
+                applyTheme(isDark.value);
             };
+
+            // 初始化時套用主題
+            onMounted(() => {
+                applyTheme(isDark.value);
+                setInterval(() => {
+                    const now = new Date();
+                    const d = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000));
+                    currentTime.value = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
+                }, 1000);
+            });
 
             // 熱更新同步
             watch(user, async (newVal) => {
@@ -268,14 +286,6 @@
                     skyPhotos.value = []; lifePhotos.value = [];
                 } catch (e) { alert("同步失敗"); } finally { uploading.value = false; }
             };
-
-            onMounted(() => {
-                setInterval(() => {
-                    const now = new Date();
-                    const d = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000));
-                    currentTime.value = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
-                }, 1000);
-            });
 
             onAuthStateChanged(auth, (u) => { user.value = u; });
             const login = () => signInWithPopup(auth, provider);
