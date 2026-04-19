@@ -7,17 +7,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-        }
+        tailwind.config = { darkMode: 'class' }
     </script>
     <style>
         .card-shadow { box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05); }
         .no-select { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
         .required-tag { font-size: 9px; color: #94a3b8; font-weight: bold; border: 1px solid #f1f5f9; padding: 1px 4px; border-radius: 4px; }
+        .done-tag { font-size: 9px; color: #10b981; background: #ecfdf5; padding: 1px 6px; border-radius: 4px; font-weight: bold; }
         .dark .required-tag { color: #64748b; border-color: #334155; }
         .tips-btn { font-size: 10px; color: #3b82f6; background: #eff6ff; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; }
-        .dark .tips-btn { background: #1e293b; color: #60a5fa; }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
         @keyframes bounce-in { 0% { transform: scale(0.9); opacity: 0; } 70% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
@@ -30,7 +28,7 @@
             
             <div v-if="!user" class="flex flex-col items-center justify-center h-[80vh] text-center">
                 <div class="bg-white dark:bg-slate-800 p-10 rounded-[2.5rem] card-shadow border border-slate-100 dark:border-slate-700">
-                    <div class="text-5xl mb-6">🛰️</div>
+                    <div class="text-5xl mb-6 text-slate-900 dark:text-white">🛰️</div>
                     <h1 class="text-3xl font-black mb-2 tracking-tight text-slate-900 dark:text-white">數位探針日誌</h1>
                     <p class="text-slate-400 mb-10 text-sm">請使用 Google 帳號開始 7 日任務</p>
                     <button @click="login" class="w-full bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-all">進入系統</button>
@@ -52,7 +50,10 @@
                         <button @click="toggleTheme" class="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 text-lg">
                             {{ isDark ? '🌙' : '☀️' }}
                         </button>
-                        <span class="inline-block bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase">Day {{ currentDayNumber }}</span>
+                        <div class="flex flex-col items-end gap-1">
+                            <span class="inline-block bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase">Day {{ currentDayNumber }}</span>
+                            <span v-if="isTodayCompleted" class="done-tag">今日已紀錄完成</span>
+                        </div>
                     </div>
                 </header>
 
@@ -68,12 +69,13 @@
                                 <h3 class="font-black text-slate-800 dark:text-slate-100 text-sm">☁️ 任務一：天空捕手</h3>
                                 <button @click="showTips('sky')" class="tips-btn">?</button>
                             </div>
-                            <span class="required-tag">必填</span>
+                            <span v-if="isTodayCompleted" class="done-tag">已完成</span>
+                            <span v-else class="required-tag">必填</span>
                         </div>
                         <div class="grid grid-cols-3 gap-2 mt-4">
                             <div v-for="(img, idx) in skyPhotos" :key="idx" class="relative aspect-square">
-                                <img :src="img" class="w-full h-full object-cover rounded-xl">
-                                <button @click="skyPhotos.splice(idx, 1)" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
+                                <img :src="img" class="w-full h-full object-cover rounded-xl shadow-inner">
+                                <button @click="skyPhotos.splice(idx, 1)" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shadow-md">×</button>
                             </div>
                             <div class="relative aspect-square border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center bg-slate-50 dark:bg-slate-900">
                                 <input type="file" accept="image/*" multiple @change="handleSkyPhotos" class="absolute inset-0 opacity-0 cursor-pointer">
@@ -88,12 +90,13 @@
                                 <h3 class="font-black text-slate-800 dark:text-slate-100 text-sm">📸 任務二：今日生活碎片</h3>
                                 <button @click="showTips('life')" class="tips-btn">?</button>
                             </div>
-                            <span class="required-tag">必填</span>
+                            <span v-if="isTodayCompleted" class="done-tag">已完成</span>
+                            <span v-else class="required-tag">必填</span>
                         </div>
                         <div class="grid grid-cols-3 gap-2 mt-4">
                             <div v-for="(img, idx) in lifePhotos" :key="idx" class="relative aspect-square">
-                                <img :src="img" class="w-full h-full object-cover rounded-xl">
-                                <button @click="lifePhotos.splice(idx, 1)" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
+                                <img :src="img" class="w-full h-full object-cover rounded-xl shadow-inner">
+                                <button @click="lifePhotos.splice(idx, 1)" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center shadow-md">×</button>
                             </div>
                             <div class="relative aspect-square border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center bg-slate-50 dark:bg-slate-900">
                                 <input type="file" accept="image/*" multiple @change="handleLifePhotos" class="absolute inset-0 opacity-0 cursor-pointer">
@@ -102,24 +105,34 @@
                         </div>
                     </section>
 
-                    <section class="bg-white dark:bg-slate-800 p-6 rounded-[2rem] card-shadow border border-slate-50 dark:border-slate-700">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-black text-slate-800 dark:text-slate-100 text-sm">💡 任務三：每日提問</h3>
-                            <span class="required-tag">必填</span>
-                        </div>
-                        <p class="text-sm font-bold text-blue-600 dark:text-blue-400 mb-4">{{ currentQuestion }}</p>
-                        <textarea v-model="answers.dailyQuestion" class="w-full rounded-2xl p-4 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 outline-none focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900 transition-all dark:text-white" rows="4" placeholder="分享您的看法..."></textarea>
-                    </section>
+                    <template v-if="!isTodayCompleted">
+                        <section class="bg-white dark:bg-slate-800 p-6 rounded-[2rem] card-shadow border border-slate-50 dark:border-slate-700">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-black text-slate-800 dark:text-slate-100 text-sm">💡 任務三：每日提問</h3>
+                                <span class="required-tag">必填</span>
+                            </div>
+                            <p class="text-sm font-bold text-blue-600 dark:text-blue-400 mb-4">{{ currentQuestion }}</p>
+                            <textarea v-model="answers.dailyQuestion" class="w-full rounded-2xl p-4 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 outline-none focus:ring-2 focus:ring-blue-100 transition-all dark:text-white" rows="4" placeholder="分享您的看法..."></textarea>
+                        </section>
 
-                    <section class="bg-blue-600 dark:bg-blue-700 p-8 rounded-[2.5rem] shadow-2xl text-white relative overflow-hidden">
-                        <div class="absolute -top-12 -right-12 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
-                        <h3 class="font-black text-sm uppercase tracking-widest opacity-80 mb-6">Final Task: Diary</h3>
-                        <textarea v-model="answers.diary" class="w-full rounded-2xl p-4 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/30 focus:bg-white focus:text-slate-800 outline-none transition-all" rows="4" placeholder="今日的感觸是..."></textarea>
-                        
-                        <button @click="submitAll" :disabled="uploading || !isFormValid" class="mt-10 w-full bg-white text-blue-600 py-4 rounded-2xl font-black shadow-xl active:scale-95 disabled:bg-blue-300 disabled:text-blue-100 transition-all">
-                            {{ uploading ? '同步資料中...' : '提交完整紀錄' }}
+                        <section class="bg-blue-600 dark:bg-blue-700 p-8 rounded-[2.5rem] shadow-2xl text-white relative overflow-hidden">
+                            <div class="absolute -top-12 -right-12 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+                            <h3 class="font-black text-sm uppercase tracking-widest opacity-80 mb-6">Final Task: Diary</h3>
+                            <textarea v-model="answers.diary" class="w-full rounded-2xl p-4 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/30 focus:bg-white focus:text-slate-800 outline-none transition-all" rows="4" placeholder="今日的感觸是..."></textarea>
+                            
+                            <button @click="submitAll" :disabled="uploading || !isFormValid" class="mt-10 w-full bg-white text-blue-600 py-4 rounded-2xl font-black shadow-xl active:scale-95 disabled:bg-blue-300 transition-all">
+                                {{ uploading ? '同步中...' : '提交紀錄' }}
+                            </button>
+                        </section>
+                    </template>
+
+                    <div v-else class="text-center py-4">
+                        <p class="text-[10px] text-slate-400 mb-4 tracking-wider uppercase font-bold">您可以繼續追加今日的照片紀錄</p>
+                        <button @click="submitAll" :disabled="uploading || (skyPhotos.length === 0 && lifePhotos.length === 0)" class="w-full bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 py-4 rounded-2xl font-black active:scale-95 disabled:opacity-50 transition-all">
+                            {{ uploading ? '正在上傳追加內容...' : '提交追加照片' }}
                         </button>
-                    </section>
+                        <button @click="logout" class="mt-8 text-[10px] text-slate-400 font-bold hover:text-red-400">登出帳號</button>
+                    </div>
                 </main>
 
                 <transition name="fade">
@@ -127,33 +140,14 @@
                         <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[3rem] overflow-hidden card-shadow animate-bounce-in text-center">
                             <img :src="`image/${successImage}`" class="w-full h-64 object-cover">
                             <div class="p-8">
-                                <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2">辛苦了！</h3>
-                                <p class="text-slate-500 dark:text-slate-400 text-sm mb-8">Day {{ currentDayNumber }} 的紀錄已封存。</p>
-                                <button @click="closeSuccessCard" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black">回到首頁</button>
+                                <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2">同步完成</h3>
+                                <p class="text-slate-500 dark:text-slate-400 text-sm mb-8">感謝您額外的分享，紀錄已更新。</p>
+                                <button @click="closeSuccessCard" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black">關閉</button>
                             </div>
                         </div>
-                    </div>
-                </transition>
+                    </transition>
 
-                <div v-if="activeTip" class="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-6 backdrop-blur-sm text-center">
-                    <div class="bg-white dark:bg-slate-800 w-full max-w-xs rounded-[2rem] p-8">
-                        <h3 class="font-black text-lg mb-4 text-slate-900 dark:text-white">{{ activeTip === 'sky' ? '☁️ 天空捕手' : '📸 生活碎片' }}</h3>
-                        <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">捕捉生活中的細節，無論是遠方的天空還是身邊的小角落，都是珍貴的紀錄。</p>
-                        <button @click="activeTip = null" class="mt-6 w-full py-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl font-bold">了解</button>
-                    </div>
                 </div>
-
-                <div v-if="showSettings" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-6 backdrop-blur-sm">
-                    <div class="bg-white dark:bg-slate-800 w-full max-w-xs rounded-[2.5rem] p-8 shadow-2xl text-center">
-                        <h3 class="font-black text-xl mb-6 dark:text-white text-slate-900">實驗室控制台</h3>
-                        <div class="grid grid-cols-4 gap-2 mb-8">
-                            <button v-for="d in 7" @click="setDay(d)" class="py-3 rounded-xl text-xs font-black transition-all" :class="currentDayNumber === d ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-400'">D{{d}}</button>
-                        </div>
-                        <button @click="resetExperiment" class="w-full py-4 bg-red-50 dark:bg-red-900/20 text-red-500 rounded-2xl font-black mb-2 text-sm">重製本地快取</button>
-                        <button @click="showSettings = false" class="w-full py-2 text-slate-400 text-xs font-bold">關閉</button>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -187,27 +181,22 @@
             const uploading = vueRef(false);
             const loadingProgress = vueRef(false);
             const dbDayNumber = vueRef(1);
+            const isTodayCompleted = vueRef(false); // 💡 新增：今日是否完成狀態
+            
             const skyPhotos = vueRef([]);
             const lifePhotos = vueRef([]);
             const answers = vueRef({ dailyQuestion: "", diary: "" });
             const showSettings = vueRef(false);
             const showSuccessCard = vueRef(false);
             const successImage = vueRef("01.png");
-            const activeTip = vueRef(null);
             const currentTime = vueRef("");
             const pressTimer = vueRef(null);
-
             const startDate = new Date(2026, 3, 20); 
             const manualOffset = vueRef(parseInt(localStorage.getItem('exp_offset')) || 0);
-            const usedImages = vueRef(JSON.parse(localStorage.getItem('used_images')) || []);
 
-            // 💡 主題切換邏輯修正：同步操作 document.documentElement 的 class
             const applyTheme = (dark) => {
-                if (dark) {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
-                }
+                if (dark) document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
             };
 
             const toggleTheme = () => {
@@ -216,24 +205,31 @@
                 applyTheme(isDark.value);
             };
 
-            // 初始化時套用主題
-            onMounted(() => {
-                applyTheme(isDark.value);
-                setInterval(() => {
-                    const now = new Date();
-                    const d = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000));
-                    currentTime.value = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
-                }, 1000);
-            });
-
-            // 熱更新同步
+            // 💡 核心邏輯：熱更新且判斷今日是否已完成
             watch(user, async (newVal) => {
                 if (newVal) {
                     loadingProgress.value = true;
                     try {
-                        const q = query(collection(db, "probes", newVal.displayName, "daily_logs"), orderBy("dayNumber", "desc"), limit(1));
+                        const q = query(collection(db, "probes", newVal.displayName, "daily_logs"), orderBy("createdAt", "desc"), limit(1));
                         const querySnapshot = await getDocs(q);
-                        if (!querySnapshot.empty) dbDayNumber.value = querySnapshot.docs[0].data().dayNumber + 1;
+                        
+                        const now = new Date();
+                        const todayLabel = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000)).toLocaleDateString('zh-TW').replace(/\//g, '-');
+
+                        if (!querySnapshot.empty) {
+                            const lastDoc = querySnapshot.docs[0].data();
+                            if (lastDoc.date === todayLabel) {
+                                // 今天已填過
+                                dbDayNumber.value = lastDoc.dayNumber;
+                                isTodayCompleted.value = true;
+                            } else {
+                                // 今天還沒填，進度 +1
+                                dbDayNumber.value = lastDoc.dayNumber + 1;
+                                isTodayCompleted.value = false;
+                            }
+                        } else {
+                            dbDayNumber.value = 1;
+                        }
                     } catch (e) { console.error(e); }
                     loadingProgress.value = false;
                 }
@@ -244,64 +240,63 @@
                 return day > 7 ? 7 : day;
             });
 
-            const isFormValid = computed(() => skyPhotos.value.length > 0 && lifePhotos.value.length > 0 && answers.value.dailyQuestion.trim() !== "" && answers.value.diary.trim() !== "");
+            // 💡 驗證邏輯：若是今日已完成，只需檢查照片；若沒完成，則全必填
+            const isFormValid = computed(() => {
+                if (isTodayCompleted.value) {
+                    return skyPhotos.value.length > 0 || lifePhotos.value.length > 0;
+                }
+                return skyPhotos.value.length > 0 && lifePhotos.value.length > 0 && 
+                       answers.value.dailyQuestion.trim() !== "" && answers.value.diary.trim() !== "";
+            });
 
-            const questions = [
-                "一個月會出國多少次？去多少種不同的國家？",
-                "長期的不規律排班和跨時區時差，對日常帶來了哪些改變？通常如何調適？",
-                "客艙工作環境中真的有階級文化嗎？有哪些新人必懂的潛規則？",
-                "這份工作最無可取代的優點與最難以忍受的缺點分別為何？",
-                "在與不同國籍的組員共事時，是否有特別的規定或不成文的默契需要遵守？",
-                "經常需要在節假日排班或長期待在外站，這對維繫家庭關係、社交圈造成了什麼影響？",
-                "隨意問答：今天有什麼特別想紀錄的事情嗎？"
-            ];
+            const questions = ["一個月會出國多少次？去多少種不同的國家？", "長期的不規律排班和跨時區時差，對日常帶來了哪些改變？通常如何調適？", "客艙工作環境中真的有階級文化嗎？有哪些新人必懂的潛規則？", "這份工作最無可取代的優點與最難以忍受的缺點分別為何？", "在與不同國籍的組員共事時，是否有特別的規定或不成文的默契需要遵守？", "經常需要在節假日排班或長期待在外站，這對維繫家庭關係、社交圈造成了什麼影響？", "隨意問答：今天有什麼特別想紀錄的事情嗎？"];
             const currentQuestion = computed(() => questions[currentDayNumber.value - 1]);
-
-            const getUnusedRandomImage = () => {
-                let all = Array.from({length: 21}, (_, i) => (i + 1).toString().padStart(2, '0'));
-                let available = all.filter(img => !usedImages.value.includes(img));
-                if (available.length === 0) { usedImages.value = []; available = all; }
-                const chosen = available[Math.floor(Math.random() * available.length)];
-                usedImages.value.push(chosen);
-                localStorage.setItem('used_images', JSON.stringify(usedImages.value));
-                return `${chosen}.png?t=${new Date().getTime()}`;
-            };
 
             const submitAll = async () => {
                 if (!isFormValid.value) return;
                 uploading.value = true;
-                const dateLabel = new Date().toLocaleDateString('zh-TW').replace(/\//g, '-');
+                const now = new Date();
+                const taipeiTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000));
+                const dateLabel = taipeiTime.toLocaleDateString('zh-TW').replace(/\//g, '-');
+
                 try {
-                    await fetch(GAS_URL, {
-                        method: "POST", mode: "no-cors",
-                        body: JSON.stringify({ userName: user.value.displayName, date: dateLabel, skyPhotos: skyPhotos.value, lifePhotos: lifePhotos.value })
-                    });
+                    // 呼叫 GAS 傳照片
+                    await fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ userName: user.value.displayName, date: dateLabel, skyPhotos: skyPhotos.value, lifePhotos: lifePhotos.value }) });
+                    
+                    // 同步 Firestore 文字
                     await setDoc(doc(db, "probes", user.value.displayName, "daily_logs", `Day${currentDayNumber.value}_${dateLabel}`), {
-                        dayNumber: currentDayNumber.value, date: dateLabel, question: currentQuestion.value, answer: answers.value.dailyQuestion, diary: answers.value.diary, userName: user.value.displayName, createdAt: serverTimestamp()
-                    });
-                    successImage.value = getUnusedRandomImage();
+                        dayNumber: currentDayNumber.value, date: dateLabel, question: currentQuestion.value,
+                        answer: answers.value.dailyQuestion, diary: answers.value.diary,
+                        userName: user.value.displayName, createdAt: serverTimestamp()
+                    }, { merge: true }); // 使用 merge 模式，避免覆蓋掉當天先前的紀錄
+
+                    isTodayCompleted.value = true;
                     showSuccessCard.value = true;
-                    dbDayNumber.value += 1;
                     answers.value = { dailyQuestion: "", diary: "" };
                     skyPhotos.value = []; lifePhotos.value = [];
                 } catch (e) { alert("同步失敗"); } finally { uploading.value = false; }
             };
 
+            onMounted(() => {
+                applyTheme(isDark.value);
+                setInterval(() => {
+                    const now = new Date();
+                    const d = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000));
+                    currentTime.value = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
+                }, 1000);
+            });
+
             onAuthStateChanged(auth, (u) => { user.value = u; });
             const login = () => signInWithPopup(auth, provider);
             const closeSuccessCard = () => showSuccessCard.value = false;
-            const showTips = (type) => activeTip.value = type;
             const handleSkyPhotos = (e) => { Array.from(e.target.files).forEach(file => { const reader = new FileReader(); reader.onload = (f) => skyPhotos.value.push(f.target.result); reader.readAsDataURL(file); }); };
             const handleLifePhotos = (e) => { Array.from(e.target.files).forEach(file => { const reader = new FileReader(); reader.onload = (f) => lifePhotos.value.push(f.target.result); reader.readAsDataURL(file); }); };
             const startLongPress = () => pressTimer.value = setTimeout(() => showSettings.value = true, 3000);
             const endLongPress = () => clearTimeout(pressTimer.value);
-            const setDay = (day) => {
-                manualOffset.value = day - dbDayNumber.value;
-                localStorage.setItem('exp_offset', manualOffset.value);
-            };
+            const setDay = (d) => { manualOffset.value = d - dbDayNumber.value; localStorage.setItem('exp_offset', manualOffset.value); };
             const resetExperiment = () => { localStorage.clear(); window.location.reload(); };
 
-            return { user, login, currentQuestion, currentDayNumber, answers, handleSkyPhotos, handleLifePhotos, skyPhotos, lifePhotos, uploading, submitAll, showSettings, setDay, resetExperiment, startLongPress, endLongPress, currentTime, activeTip, showTips, isFormValid, showSuccessCard, successImage, closeSuccessCard, loadingProgress, isDark, toggleTheme };
+            return { user, login, currentQuestion, currentDayNumber, answers, handleSkyPhotos, handleLifePhotos, skyPhotos, lifePhotos, uploading, submitAll, showSettings, setDay, resetExperiment, startLongPress, endLongPress, currentTime, isFormValid, showSuccessCard, successImage: "01.png", closeSuccessCard, loadingProgress, isDark, toggleTheme, isTodayCompleted };
         }
     }).mount('#app');
 </script>
