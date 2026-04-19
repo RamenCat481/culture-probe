@@ -247,23 +247,29 @@
                 });
             };
 
+                // 1. 修改隨機選取圖片的邏輯，確保支援 PNG
             const getUnusedRandomImage = () => {
                 let allImages = Array.from({length: 21}, (_, i) => (i + 1).toString().padStart(2, '0'));
                 let available = allImages.filter(img => !usedImages.value.includes(img));
-                
-                // 如果 21 張都用完了，就重置清單
+    
                 if (available.length === 0) {
                     usedImages.value = [];
                     available = allImages;
                 }
-                
+    
                 const randIndex = Math.floor(Math.random() * available.length);
                 const chosen = available[randIndex];
-                
+    
                 usedImages.value.push(chosen);
                 localStorage.setItem('used_images', JSON.stringify(usedImages.value));
-                return chosen;
-            };
+    
+                // 返回檔名，並加上時間戳記防止瀏覽器快取圖片
+                return `${chosen}.png?t=${new Date().getTime()}`; 
+        };
+
+            // 2. 修改 HTML 模板中的圖片標籤 (在成功彈窗內)
+            // 將原本的 :src="`image/${successImage}.jpg`" 
+            // 改為直接引用 successImage (因為我們在函數裡已經把副檔名寫進去了)
 
             const submitAll = async () => {
                 if (!isFormValid.value) return;
