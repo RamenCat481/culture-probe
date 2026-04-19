@@ -8,11 +8,11 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
         .card-shadow { box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.08); }
-        /* 防止手機長按選取文字影響體驗 */
         .no-select { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+        .required-tag { font-size: 9px; color: #94a3b8; font-weight: bold; border: 1px solid #e2e8f0; padding: 1px 4px; border-radius: 4px; }
     </style>
 </head>
-<body class="bg-[#F8FAFC] text-slate-800 no-select">
+<body class="bg-[#F8FAFC] text-slate-800 no-select font-sans">
     <div id="app" class="max-w-md mx-auto min-h-screen p-6 pb-24">
         
         <div v-if="!user" class="flex flex-col items-center justify-center h-[80vh] text-center">
@@ -43,7 +43,13 @@
 
             <main class="space-y-6">
                 <section class="bg-white p-6 rounded-[2rem] card-shadow border border-slate-50">
-                    <h3 class="font-black text-slate-800 mb-1 text-sm">☁️ 任務一：天空捕手 (必填)</h3>
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-black text-slate-800 text-sm">☁️ 任務一：天空捕手</h3>
+                        <span class="required-tag">必填</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mb-4 leading-relaxed">
+                        捕捉您當下位置的天空。無論是機艙窗外、復健室窗邊或家中的陽台，天空的陰晴變化都反應了您的空間感與心情。
+                    </p>
                     <div class="grid grid-cols-3 gap-2 mt-4">
                         <div v-for="(img, idx) in skyPhotos" :key="idx" class="relative aspect-square">
                             <img :src="img" class="w-full h-full object-cover rounded-xl shadow-inner">
@@ -57,7 +63,13 @@
                 </section>
 
                 <section class="bg-white p-6 rounded-[2rem] card-shadow border border-slate-50">
-                    <h3 class="font-black text-slate-800 mb-1 text-sm">📸 任務二：生活碎片 (選填)</h3>
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-black text-slate-800 text-sm">📸 任務二：生活瑣碎紀錄</h3>
+                        <span class="required-tag">必填</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mb-4 leading-relaxed">
+                        紀錄今天生活中一個讓您產生「空服員職業直覺」的瞬間。例如：整理東西的習慣、觀察他人的眼神、或是一件讓您想起飛行的私人物品。
+                    </p>
                     <div class="grid grid-cols-3 gap-2 mt-4">
                         <div v-for="(img, idx) in lifePhotos" :key="idx" class="relative aspect-square">
                             <img :src="img" class="w-full h-full object-cover rounded-xl shadow-inner">
@@ -76,25 +88,24 @@
                     <p class="text-lg font-bold leading-snug mb-8">{{ currentQuestion }}</p>
                     
                     <div class="space-y-6">
-                        <textarea v-model="answers.dailyQuestion" class="w-full rounded-2xl p-4 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/30 focus:bg-white focus:text-slate-800 outline-none transition-all" rows="3" placeholder="您的看法..."></textarea>
-                        <textarea v-model="answers.diary" class="w-full rounded-2xl p-4 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/30 focus:bg-white focus:text-slate-800 outline-none transition-all" rows="3" placeholder="今日小日記..."></textarea>
+                        <textarea v-model="answers.dailyQuestion" class="w-full rounded-2xl p-4 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/30 focus:bg-white focus:text-slate-800 outline-none transition-all" rows="3" placeholder="在這裡分享您的看法..."></textarea>
+                        <textarea v-model="answers.diary" class="w-full rounded-2xl p-4 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/30 focus:bg-white focus:text-slate-800 outline-none transition-all" rows="3" placeholder="今日的小日記（自由紀錄）"></textarea>
                     </div>
                     
-                    <button @click="submitAll" :disabled="uploading || skyPhotos.length === 0" class="mt-8 w-full bg-white text-blue-600 py-4 rounded-2xl font-black shadow-xl active:scale-95 disabled:bg-blue-300 disabled:text-blue-100 transition-all">
-                        {{ uploading ? '同步中...' : '提交紀錄' }}
+                    <button @click="submitAll" :disabled="uploading || skyPhotos.length === 0 || lifePhotos.length === 0" class="mt-8 w-full bg-white text-blue-600 py-4 rounded-2xl font-black shadow-xl active:scale-95 disabled:bg-blue-300 disabled:text-blue-100 transition-all">
+                        {{ uploading ? '同步資料中...' : '提交今日紀錄' }}
                     </button>
-                    <button @click="logout" class="w-full mt-4 text-[10px] text-blue-200 font-bold opacity-60">登出帳號</button>
+                    <p v-if="skyPhotos.length === 0 || lifePhotos.length === 0" class="text-[9px] mt-4 text-center text-blue-200 opacity-80">
+                        * 需完成兩項照片任務即可提交
+                    </p>
                 </section>
             </main>
 
             <div v-if="showSettings" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-6 backdrop-blur-sm">
-                <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8 shadow-2xl">
-                    <h3 class="font-black text-xl mb-2 text-center">實驗室控制台</h3>
-                    <p class="text-[10px] text-slate-400 mb-6 font-medium text-center">僅限研究人員操作</p>
+                <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8 shadow-2xl text-center">
+                    <h3 class="font-black text-xl mb-2">實驗室控制台</h3>
                     <div class="grid grid-cols-4 gap-2 mb-8">
-                        <button v-for="d in 7" @click="setDay(d)" class="py-3 rounded-xl text-xs font-black transition-all" :class="currentDayNumber === d ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'">
-                            D{{ d }}
-                        </button>
+                        <button v-for="d in 7" @click="setDay(d)" class="py-3 rounded-xl text-xs font-black transition-all" :class="currentDayNumber === d ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'">D{{d}}</button>
                     </div>
                     <button @click="resetExperiment" class="w-full py-4 bg-red-50 text-red-500 rounded-2xl font-black text-sm mb-3">重製本地狀態</button>
                     <button @click="showSettings = false" class="w-full py-2 text-slate-400 text-xs font-bold">返回任務</button>
@@ -104,6 +115,7 @@
     </div>
 
 <script type="module">
+    // ... (Firebase 初始與 Setup 邏輯與上版本一致，僅 submitAll 修改邏輯)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
     import { getFirestore, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -135,13 +147,9 @@
             const answers = vueRef({ dailyQuestion: "", diary: "" });
             const showSettings = vueRef(false);
             const pressTimer = vueRef(null);
-
-            // ⚠️ 研究開始日期 (2026-04-20)
             const startDate = new Date(2026, 3, 20); 
-
             const manualOffset = vueRef(parseInt(localStorage.getItem('exp_offset')) || 0);
 
-            // 天數計算：強制以台北 GMT+8 為基準
             const currentDayNumber = computed(() => {
                 const now = new Date();
                 const taipeiTime = now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000);
@@ -162,24 +170,16 @@
                 "經常需要在節假日排班或長期待在外站，這對維繫家庭關係、社交圈造成了什麼影響？",
                 "隨意問答：今天有什麼特別想紀錄的事情嗎？"
             ];
-
             const currentQuestion = computed(() => questions[currentDayNumber.value - 1]);
 
             onAuthStateChanged(auth, (u) => { user.value = u; });
-
             const login = () => signInWithPopup(auth, provider);
             const logout = () => { signOut(auth); user.value = null; };
 
-            // 💡 隱藏長按觸發邏輯
             const startLongPress = () => {
-                pressTimer.value = setTimeout(() => {
-                    showSettings.value = true;
-                    if (window.navigator.vibrate) window.navigator.vibrate(100);
-                }, 3000); // 需持續按住 3 秒
+                pressTimer.value = setTimeout(() => { showSettings.value = true; }, 3000);
             };
-            const endLongPress = () => {
-                clearTimeout(pressTimer.value);
-            };
+            const endLongPress = () => clearTimeout(pressTimer.value);
 
             const handleSkyPhotos = (e) => {
                 Array.from(e.target.files).forEach(file => {
@@ -205,13 +205,11 @@
                 localStorage.setItem('exp_offset', manualOffset.value);
             };
 
-            const resetExperiment = () => {
-                localStorage.clear();
-                window.location.reload();
-            };
+            const resetExperiment = () => { localStorage.clear(); window.location.reload(); };
 
             const submitAll = async () => {
-                if (!user.value || skyPhotos.length === 0) return;
+                // 💡 更新驗證邏輯：兩者皆須有照片
+                if (!user.value || skyPhotos.value.length === 0 || lifePhotos.value.length === 0) return;
                 uploading.value = true;
                 const now = new Date();
                 const taipeiDate = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000));
@@ -239,12 +237,12 @@
                         createdAt: serverTimestamp()
                     });
 
-                    alert(`🎉 Day ${currentDayNumber.value} 任務已成功送出！`);
+                    alert(`🎉 Day ${currentDayNumber.value} 任務已送出！`);
                     answers.value = { dailyQuestion: "", diary: "" };
                     skyPhotos.value = [];
                     lifePhotos.value = [];
                 } catch (e) {
-                    alert("同步發生錯誤，請稍後再試。");
+                    alert("同步錯誤");
                 } finally {
                     uploading.value = false;
                 }
