@@ -88,18 +88,30 @@
                     </div>
                 </section>
 
+                <section class="bg-white p-6 rounded-[2rem] card-shadow border border-slate-50">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-black text-slate-800 text-sm">💡 任務三：每日提問</h3>
+                        <span class="required-tag">必填</span>
+                    </div>
+                    <p class="text-sm font-bold leading-relaxed text-blue-600 mb-4">{{ currentQuestion }}</p>
+                    <textarea v-model="answers.dailyQuestion" class="w-full rounded-2xl p-4 text-sm bg-slate-50 border border-slate-100 text-slate-700 placeholder:text-slate-300 focus:bg-white focus:ring-2 focus:ring-blue-100 outline-none transition-all" rows="4" placeholder="針對提問分享您的看法..."></textarea>
+                </section>
+
                 <section class="bg-blue-600 p-8 rounded-[2.5rem] shadow-2xl text-white relative overflow-hidden">
                     <div class="absolute -top-12 -right-12 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
-                    <p class="text-[10px] font-black opacity-60 mb-4 tracking-widest uppercase">Question of the Day</p>
-                    <p class="text-lg font-bold leading-snug mb-8">{{ currentQuestion }}</p>
-                    <div class="space-y-6">
-                        <textarea v-model="answers.dailyQuestion" class="w-full rounded-2xl p-4 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/30 focus:bg-white focus:text-slate-800 outline-none transition-all" rows="3" placeholder="您的看法..."></textarea>
-                        <textarea v-model="answers.diary" class="w-full rounded-2xl p-4 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/30 focus:bg-white focus:text-slate-800 outline-none transition-all" rows="3" placeholder="今日隨手筆記（非必填）"></textarea>
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="font-black text-sm uppercase tracking-widest opacity-80">Final Task: Diary</h3>
+                        <span class="required-tag border-white/20 text-white/80">必填</span>
                     </div>
-                    <button @click="submitAll" :disabled="uploading || skyPhotos.length === 0 || lifePhotos.length === 0" class="mt-8 w-full bg-white text-blue-600 py-4 rounded-2xl font-black shadow-xl active:scale-95 disabled:bg-blue-300 disabled:text-blue-100 transition-all">
-                        {{ uploading ? '同步資料中...' : '提交紀錄' }}
+                    <p class="text-[11px] opacity-70 mb-4">這是一個自由紀錄的空間，請隨手寫下今天任何想留存的感觸或對話。</p>
+                    <textarea v-model="answers.diary" class="w-full rounded-2xl p-4 text-sm bg-white/10 border border-white/20 text-white placeholder:text-white/30 focus:bg-white focus:text-slate-800 outline-none transition-all" rows="4" placeholder="今日的感觸是..."></textarea>
+                    
+                    <button @click="submitAll" :disabled="uploading || skyPhotos.length === 0 || lifePhotos.length === 0 || !answers.dailyQuestion.trim() || !answers.diary.trim()" class="mt-10 w-full bg-white text-blue-600 py-4 rounded-2xl font-black shadow-xl active:scale-95 disabled:bg-blue-300 disabled:text-blue-100 transition-all">
+                        {{ uploading ? '同步資料中...' : '提交完整紀錄' }}
                     </button>
-                    <button @click="logout" class="w-full mt-4 text-[10px] text-blue-200 font-bold opacity-60">登出</button>
+                    <p v-if="skyPhotos.length === 0 || lifePhotos.length === 0 || !answers.dailyQuestion.trim() || !answers.diary.trim()" class="text-[9px] mt-4 text-center text-blue-100 opacity-60">
+                        * 請完成所有照片與文字任務即可提交
+                    </p>
                 </section>
             </main>
 
@@ -108,14 +120,12 @@
                     <h3 class="font-black text-lg mb-4">{{ activeTip === 'sky' ? '☁️ 天空捕手小提示' : '📸 生活碎片小提示' }}</h3>
                     <ul class="text-sm text-slate-500 space-y-3 mb-8">
                         <template v-if="activeTip === 'sky'">
-                            <li>• 可以是透過任何一扇窗戶看到的樣子</li>
-                            <li>• 捕捉雲朵、顏色或此刻的光線</li>
-                            <li>• 不同高度或視角的天空都可以</li>
+                            <li>• 任何一扇窗戶看到的樣子都可以。</li>
+                            <li>• 捕捉雲朵的形狀或此刻的光線色彩。</li>
                         </template>
                         <template v-else>
-                            <li>• 某件整理好的私人物品</li>
-                            <li>• 日常生活中讓您駐足的場景</li>
-                            <li>• 任何一個反應您當下狀態的小角落</li>
+                            <li>• 紀錄一件讓您心情產生起伏的小事。</li>
+                            <li>• 任何一個反應您當下生活狀態的小角落。</li>
                         </template>
                     </ul>
                     <button @click="activeTip = null" class="w-full py-3 bg-blue-50 text-blue-600 rounded-xl font-bold">了解</button>
@@ -123,13 +133,13 @@
             </div>
 
             <div v-if="showSettings" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-6 backdrop-blur-sm">
-                <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8">
-                    <h3 class="font-black text-xl mb-6 text-center">實驗室控制台</h3>
+                <div class="bg-white w-full max-w-xs rounded-[2.5rem] p-8 shadow-2xl text-center">
+                    <h3 class="font-black text-xl mb-6">實驗室控制台</h3>
                     <div class="grid grid-cols-4 gap-2 mb-8">
-                        <button v-for="d in 7" @click="setDay(d)" class="py-3 rounded-xl text-xs font-black" :class="currentDayNumber === d ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'">D{{d}}</button>
+                        <button v-for="d in 7" @click="setDay(d)" class="py-3 rounded-xl text-xs font-black transition-all" :class="currentDayNumber === d ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'">D{{d}}</button>
                     </div>
                     <button @click="resetExperiment" class="w-full py-4 bg-red-50 text-red-500 rounded-2xl font-black mb-3 text-sm">重製實驗</button>
-                    <button @click="showSettings = false" class="w-full py-2 text-slate-400 text-xs font-bold">關閉</button>
+                    <button @click="showSettings = false" class="w-full py-2 text-slate-400 text-xs font-bold">返回</button>
                 </div>
             </div>
         </div>
@@ -170,14 +180,12 @@
             const currentTime = vueRef("");
             const pressTimer = vueRef(null);
 
-            const startDate = new Date(2026, 3, 20); 
+            const startDate = new Date(2026, 3, 20); // 2026-04-20
             const manualOffset = vueRef(parseInt(localStorage.getItem('exp_offset')) || 0);
 
-            // 更新時間顯示 (GMT+8)
             const updateTime = () => {
                 const now = new Date();
-                const taipeiTime = now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000);
-                const d = new Date(taipeiTime);
+                const d = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000));
                 currentTime.value = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
             };
 
@@ -240,7 +248,7 @@
             const resetExperiment = () => { localStorage.clear(); window.location.reload(); };
 
             const submitAll = async () => {
-                if (!user.value || skyPhotos.value.length === 0 || lifePhotos.value.length === 0) return;
+                if (!user.value || skyPhotos.value.length === 0 || lifePhotos.value.length === 0 || !answers.value.dailyQuestion.trim() || !answers.value.diary.trim()) return;
                 uploading.value = true;
                 const now = new Date();
                 const taipeiTime = now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000);
