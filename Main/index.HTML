@@ -29,46 +29,47 @@
     <div id="app" class="min-h-screen bg-[#F8FAFC] dark:bg-[#0F172A] text-slate-800 dark:text-slate-200 no-select font-sans">
         <div class="max-w-md mx-auto p-6 pb-24">
             
+            <header v-if="user && !showArchive" class="flex justify-between items-start mb-8">
+                <div>
+                    <h2 @mousedown="startLongPress" @mouseup="endLongPress" @touchstart="startLongPress" @touchend="endLongPress" class="text-2xl font-black text-slate-900 dark:text-white leading-none mb-2">{{ user.displayName }}</h2>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Taipei Time: {{ currentTime }}</p>
+                </div>
+                <div class="flex flex-col items-end gap-3">
+                    <div class="flex gap-2">
+                        <button @click="openArchive" class="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 text-lg">📖</button>
+                        <button @click="toggleTheme" class="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 text-lg">{{ isDark ? '🌙' : '☀️' }}</button>
+                    </div>
+                    <div class="flex flex-col items-end gap-1">
+                        <span class="inline-block bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">Day {{ currentDayNumber }}</span>
+                        <span v-if="isTodayCompleted" class="done-tag">今日已完成同步</span>
+                    </div>
+                </div>
+            </header>
+
             <div v-if="!user" class="flex flex-col items-center justify-center h-[80vh] text-center">
                 <div class="bg-white dark:bg-slate-800 p-10 rounded-[2.5rem] card-shadow border border-slate-100 dark:border-slate-700">
                     <div class="text-5xl mb-6">🛰️</div>
                     <h1 class="text-3xl font-black mb-2 tracking-tight text-slate-900 dark:text-white">數位探針日誌</h1>
-                    <p class="text-slate-400 mb-10 text-sm font-bold">登入 Google 帳號以開始紀錄 [cite: 2026-04-30]</p>
+                    <p class="text-slate-400 mb-10 text-sm">請登入 Google 帳號以開始紀錄</p>
                     <button @click="login" class="w-full bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-all">進入系統</button>
                 </div>
             </div>
 
             <div v-else>
-                <header v-if="!showArchive" class="flex justify-between items-start mb-8">
-                    <div>
-                        <h2 @mousedown="startLongPress" @mouseup="endLongPress" @touchstart="startLongPress" @touchend="endLongPress" class="text-2xl font-black text-slate-900 dark:text-white leading-none mb-2">{{ user.displayName }}</h2>
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Taipei Time: {{ currentTime }} [cite: 2026-04-30]</p>
-                    </div>
-                    <div class="flex flex-col items-end gap-3">
-                        <div class="flex gap-2">
-                            <button @click="openArchive" class="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 text-lg">📖</button>
-                            <button @click="toggleTheme" class="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 text-lg">{{ isDark ? '🌙' : '☀️' }}</button>
-                        </div>
-                        <div class="flex flex-col items-end gap-1">
-                            <span class="inline-block bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">Day {{ currentDayNumber }}</span>
-                        </div>
-                    </div>
-                </header>
-
                 <main v-if="showArchive" class="space-y-8 animate-fade-in pb-10">
                     <header class="flex justify-between items-center mb-6">
                         <button @click="showArchive = false" class="text-blue-600 font-black text-sm">← 返回紀錄</button>
                         <h3 class="font-black text-lg">數位回憶錄</h3>
                     </header>
                     <div v-if="archiveLoading" class="flex justify-center py-20"><div class="animate-spin text-2xl text-blue-500">⌛</div></div>
-                    <div v-else-if="archives.length === 0" class="text-center py-20 opacity-40 text-sm">目前尚無歷史紀錄 [cite: 2026-04-30]</div>
+                    <div v-else-if="archives.length === 0" class="text-center py-20 opacity-40 text-sm">目前尚無歷史紀錄</div>
                     <div v-else class="space-y-12">
                         <div v-for="log in archives" :key="log.date" class="relative pl-6 border-l-2 border-slate-200 dark:border-slate-700">
                             <div class="absolute -left-[9px] top-0 w-4 h-4 bg-blue-600 rounded-full border-4 border-white dark:border-slate-900 shadow-sm"></div>
                             <p class="text-[10px] font-black text-blue-600 uppercase mb-2 tracking-widest">Day {{ log.dayNumber }} • {{ log.date }}</p>
                             <div class="bg-white dark:bg-slate-800 p-6 rounded-[2rem] card-shadow border border-slate-50 dark:border-slate-700 space-y-4">
                                 <div v-if="log.skyNote" class="text-xs leading-relaxed italic opacity-80 border-l-2 border-slate-200 dark:border-slate-700 pl-3">{{ log.skyNote }}</div>
-                                <div v-if="log.lifeNote" class="text-xs leading-relaxed">{{ log.lifeNote }}</div>
+                                <div v-if="log.lifeNote" class="text-xs leading-relaxed whitespace-pre-line">{{ log.lifeNote }}</div>
                             </div>
                         </div>
                     </div>
@@ -78,16 +79,16 @@
                     <section class="instruction-box p-6 rounded-[2rem] card-shadow">
                         <div class="flex items-center gap-3 mb-4">
                             <span class="text-2xl">🎴</span>
-                            <h3 class="font-black text-slate-800 dark:text-slate-100 text-sm uppercase tracking-widest">實體小卡撰寫指南 [cite: 2026-04-30]</h3>
+                            <h3 class="font-black text-slate-800 dark:text-slate-100 text-sm uppercase tracking-widest">實體小卡撰寫指南</h3>
                         </div>
                         <ul class="space-y-3">
                             <li class="flex items-start gap-3">
                                 <span class="text-[10px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">1</span>
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-bold">挑選小卡上感興趣的問題回答（至少一題，亦可寫多個）。 [cite: 2026-04-30]</p>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-bold">請挑選小卡上感興趣的問題回答，寫在卡片上即可（天至少一題，亦可回答多個問題）。</p>
                             </li>
                             <li class="flex items-start gap-3">
                                 <span class="text-[10px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">2</span>
-                                <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-bold">不需拍照上傳小卡；長內容可寫在背面。 [cite: 2026-04-30]</p>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-bold">不需拍照上傳小卡；長內容可寫在背面。</p>
                             </li>
                         </ul>
                     </section>
@@ -97,7 +98,7 @@
                         <div class="grid grid-cols-3 gap-2">
                             <div v-for="(img, idx) in skyPhotos" :key="idx" class="relative aspect-square">
                                 <img :src="img" class="w-full h-full object-cover rounded-xl shadow-inner">
-                                <button @click="skyPhotos.splice(idx, 1)" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs">×</button>
+                                <button @click="skyPhotos.splice(idx, 1)" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
                             </div>
                             <div class="relative aspect-square border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center bg-slate-50 dark:bg-slate-900">
                                 <input type="file" accept="image/*" multiple @change="handleSkyPhotos" class="absolute inset-0 opacity-0">
@@ -107,14 +108,53 @@
                         <textarea v-model="answers.skyNote" class="mt-4 w-full rounded-2xl p-4 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 outline-none dark:text-white" rows="2" placeholder="同步關於這片天空的隨手筆記..."></textarea>
                     </section>
 
+                    <section class="bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] card-shadow border border-slate-50 dark:border-slate-700">
+                        <h3 class="font-black text-sm mb-4">📸 任務二：今日生活碎片</h3>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div v-for="(img, idx) in lifePhotos" :key="idx" class="relative aspect-square">
+                                <img :src="img" class="w-full h-full object-cover rounded-xl shadow-inner">
+                                <button @click="lifePhotos.splice(idx, 1)" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
+                            </div>
+                            <div class="relative aspect-square border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+                                <input type="file" accept="image/*" multiple @change="handleLifePhotos" class="absolute inset-0 opacity-0">
+                                <span class="text-2xl text-slate-300">+</span>
+                            </div>
+                        </div>
+                        <textarea v-model="answers.lifeNote" class="mt-4 w-full rounded-2xl p-4 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 outline-none dark:text-white" rows="4" placeholder="今天生活中發現了什麼有趣或值得紀錄的小事？"></textarea>
+                    </section>
+
                     <div class="pt-4">
                         <button @click="submitAll" :disabled="uploading || !isFormValid" class="w-full bg-blue-600 text-white py-5 rounded-[2.5rem] font-black shadow-xl active:scale-95 disabled:bg-slate-300 transition-all">
                             {{ uploading ? '同步中...' : (isTodayCompleted ? '追加今日筆記' : '完成今日同步') }}
                         </button>
-                        <button @click="logout" class="w-full mt-8 text-[10px] text-slate-400 font-bold hover:text-red-400 uppercase tracking-widest">Logout</button>
+                        <button @click="logout" class="w-full mt-8 text-[10px] text-slate-400 font-bold hover:text-red-400 uppercase tracking-widest">Logout System</button>
                     </div>
                 </main>
                 <main v-else class="flex flex-col items-center justify-center py-20"><div class="animate-spin text-3xl mb-4 text-blue-500">⌛</div></main>
+            </div>
+        </div>
+
+        <transition name="fade">
+            <div v-if="showSuccessCard" class="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6 backdrop-blur-md text-center">
+                <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[3rem] overflow-hidden card-shadow animate-bounce-in">
+                    <div class="p-10">
+                        <div class="text-5xl mb-6">🛰️</div>
+                        <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2">同步完成</h3>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm mb-8 font-bold">紀錄已同步雲端。<br>別忘了在實體小卡標註進度！</p>
+                        <button @click="closeSuccessCard" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg">關閉</button>
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <div v-if="showSettings" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-6 backdrop-blur-sm text-center">
+            <div class="bg-white dark:bg-slate-800 w-full max-w-xs rounded-[2.5rem] p-8 shadow-2xl">
+                <h3 class="font-black text-xl mb-6 dark:text-white">實驗室控制台</h3>
+                <div class="grid grid-cols-4 gap-2 mb-8">
+                    <button v-for="d in 7" @click="setDay(d)" class="py-3 rounded-xl text-xs font-black" :class="currentDayNumber === d ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-400'">D{{d}}</button>
+                </div>
+                <button @click="resetExperiment" class="w-full py-4 bg-red-50 text-red-500 rounded-2xl font-black mb-2 text-sm">重製本地快取</button>
+                <button @click="showSettings = false" class="w-full py-2 text-slate-400 text-xs font-bold">關閉</button>
             </div>
         </div>
     </div>
@@ -140,7 +180,7 @@
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    const { createApp, ref: vueRef, computed, onMounted, watch } = Vue;
+    const { createApp, ref: vueRef, computed, onMounted } = Vue;
 
     createApp({
         setup() {
@@ -160,8 +200,8 @@
             const manualOffset = vueRef(parseInt(localStorage.getItem('exp_offset')) || 0);
 
             const showArchive = vueRef(false);
-            const archiveLoading = vueRef(false);
             const archives = vueRef([]);
+            const archiveLoading = vueRef(false);
 
             const syncProgress = async (u) => {
                 loadingProgress.value = true;
@@ -169,7 +209,6 @@
                     const q = query(collection(db, "probes", u.displayName, "daily_logs"), orderBy("createdAt", "desc"), limit(1));
                     const querySnapshot = await getDocs(q);
                     const todayLabel = new Date(new Date().getTime() + (new Date().getTimezoneOffset() * 60000) + (8 * 3600000)).toLocaleDateString('zh-TW').replace(/\//g, '-');
-
                     if (!querySnapshot.empty) {
                         const lastDoc = querySnapshot.docs[0].data();
                         if (lastDoc.date === todayLabel) {
@@ -185,13 +224,30 @@
                 loadingProgress.value = false;
             };
 
-            onMounted(() => {
-                // 💡 修正：在 Mounted 時啟動 Auth 監聽，確保狀態變更會觸發同步
-                onAuthStateChanged(auth, (u) => {
-                    user.value = u;
-                    if (u) syncProgress(u);
-                });
+            const submitAll = async () => {
+                if (uploading.value) return;
+                uploading.value = true;
+                const now = new Date();
+                const taipeiTime = new Date(now.getTime() + (now.getTimezoneOffset() * 60000) + (8 * 3600000));
+                const dateLabel = taipeiTime.toLocaleDateString('zh-TW').replace(/\//g, '-');
+                const timeLabel = taipeiTime.toLocaleTimeString('zh-TW', { hour12: false });
+                const mergeNote = (oldVal, newVal) => (newVal.trim() === "") ? oldVal : (oldVal === "" ? newVal : `${oldVal}\n\n[追加於 ${timeLabel}]\n${newVal}`);
+                const finalSkyNote = mergeNote(oldNotes.value.sky, answers.value.skyNote);
+                const finalLifeNote = mergeNote(oldNotes.value.life, answers.value.lifeNote);
+                try {
+                    await fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ userName: user.value.displayName, date: dateLabel, skyPhotos: skyPhotos.value, lifePhotos: lifePhotos.value, skyNote: finalSkyNote, lifeNote: finalLifeNote }) });
+                    const dataToSave = { dayNumber: dbDayNumber.value + manualOffset.value, date: dateLabel, skyNote: finalSkyNote, lifeNote: finalLifeNote, userName: user.value.displayName, createdAt: serverTimestamp() };
+                    await setDoc(doc(db, "probes", user.value.displayName, "daily_logs", `Day${dataToSave.dayNumber}_${dateLabel}`), dataToSave, { merge: true });
+                    isTodayCompleted.value = true;
+                    oldNotes.value = { sky: finalSkyNote, life: finalLifeNote };
+                    answers.value = { skyNote: "", lifeNote: "" };
+                    skyPhotos.value = []; lifePhotos.value = [];
+                    showSuccessCard.value = true;
+                } catch (e) { alert("同步錯誤"); } finally { uploading.value = false; }
+            };
 
+            onMounted(() => {
+                onAuthStateChanged(auth, (u) => { user.value = u; if (u) syncProgress(u); });
                 document.documentElement.classList.toggle('dark', isDark.value);
                 setInterval(() => {
                     const d = new Date(new Date().getTime() + (new Date().getTimezoneOffset() * 60000) + (8 * 3600000));
@@ -200,16 +256,13 @@
             });
 
             return { 
-                user, 
-                login: () => signInWithPopup(auth, provider), 
-                logout: () => { signOut(auth); user.value = null; showArchive.value = false; }, 
+                user, login: () => signInWithPopup(auth, provider), logout: () => { signOut(auth); user.value = null; showArchive.value = false; }, 
                 currentDayNumber: computed(() => dbDayNumber.value + manualOffset.value), 
-                answers, skyPhotos, lifePhotos, uploading, 
-                submitAll: async () => { /* ... 提交邏輯同前 ... */ },
-                showArchive, archiveLoading, archives, 
+                answers, skyPhotos, lifePhotos, uploading, submitAll, 
+                isFormValid: computed(() => isTodayCompleted.value ? (skyPhotos.value.length > 0 || lifePhotos.value.length > 0 || answers.value.skyNote.trim() !== "" || answers.value.lifeNote.trim() !== "") : (skyPhotos.value.length > 0 && lifePhotos.value.length > 0)),
+                showArchive, archives, archiveLoading, 
                 openArchive: async () => {
-                    showArchive.value = true;
-                    archiveLoading.value = true;
+                    showArchive.value = true; archiveLoading.value = true;
                     try {
                         const q = query(collection(db, "probes", user.value.displayName, "daily_logs"), orderBy("dayNumber", "asc"));
                         const querySnapshot = await getDocs(q);
@@ -217,7 +270,14 @@
                     } catch (e) { console.error(e); }
                     archiveLoading.value = false;
                 },
-                // 其餘函式略...
+                toggleTheme: () => { isDark.value = !isDark.value; localStorage.setItem('theme', isDark.value ? 'dark' : 'light'); document.documentElement.classList.toggle('dark', isDark.value); },
+                isDark, isTodayCompleted, currentTime, loadingProgress, showSuccessCard, closeSuccessCard: () => showSuccessCard.value = false,
+                handleSkyPhotos: (e) => Array.from(e.target.files).forEach(file => { const r = new FileReader(); r.onload = (f) => skyPhotos.value.push(f.target.result); r.readAsDataURL(file); }),
+                handleLifePhotos: (e) => Array.from(e.target.files).forEach(file => { const r = new FileReader(); r.onload = (f) => lifePhotos.value.push(f.target.result); r.readAsDataURL(file); }),
+                showSettings, setDay: (d) => { manualOffset.value = d - dbDayNumber.value; localStorage.setItem('exp_offset', manualOffset.value); },
+                resetExperiment: () => { localStorage.clear(); window.location.reload(); },
+                startLongPress: () => pressTimer.value = setTimeout(() => showSettings.value = true, 3000),
+                endLongPress: () => clearTimeout(pressTimer.value)
             };
         }
     }).mount('#app');
