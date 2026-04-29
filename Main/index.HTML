@@ -21,6 +21,9 @@
         .fade-enter-from, .fade-leave-to { opacity: 0; }
         @keyframes bounce-in { 0% { transform: scale(0.9); opacity: 0; } 70% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
         .animate-bounce-in { animation: bounce-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        /* 說明框特殊樣式 */
+        .instruction-box { border: 1.5px solid #e2e8f0; background: linear-gradient(to bottom right, #ffffff, #f8fafc); }
+        .dark .instruction-box { border-color: #334155; background: linear-gradient(to bottom right, #1e293b, #0f172a); }
     </style>
 </head>
 <body class="transition-colors duration-300">
@@ -35,7 +38,7 @@
                 <div class="flex flex-col items-end gap-3">
                     <button @click="toggleTheme" class="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 text-lg">{{ isDark ? '🌙' : '☀️' }}</button>
                     <div class="flex flex-col items-end gap-1">
-                        <span class="inline-block bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase">Day {{ currentDayNumber }}</span>
+                        <span class="inline-block bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg shadow-blue-500/30">Day {{ currentDayNumber }}</span>
                         <span v-if="isTodayCompleted" class="done-tag">今日已完成同步</span>
                     </div>
                 </div>
@@ -52,6 +55,27 @@
 
             <main v-else-if="!loadingProgress" class="space-y-6">
                 
+                <section class="instruction-box p-6 rounded-[2rem] card-shadow">
+                    <div class="flex items-center gap-3 mb-4">
+                        <span class="text-2xl">🎴</span>
+                        <h3 class="font-black text-slate-800 dark:text-slate-100 text-sm uppercase tracking-widest">實體小卡撰寫指南</h3>
+                    </div>
+                    <ul class="space-y-3">
+                        <li class="flex items-start gap-3">
+                            <span class="text-[10px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">1</span>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-bold">每天請從實體小卡中，挑選一個您感興趣的問題進行簡短回答。</p>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="text-[10px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">2</span>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-bold">只需寫下答案即可，不需拍照上傳小卡；內容較長時可書寫於小卡背面。</p>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <span class="text-[10px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">3</span>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-bold italic opacity-75">數位工具包（本網頁）將同步備份您的視覺紀錄與今日心情。</p>
+                        </li>
+                    </ul>
+                </section>
+
                 <section class="bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] card-shadow border border-slate-50 dark:border-slate-700">
                     <div class="flex justify-between items-center mb-3">
                         <div class="flex items-center gap-2">
@@ -67,11 +91,11 @@
                             <button @click="skyPhotos.splice(idx, 1)" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs">×</button>
                         </div>
                         <div class="relative aspect-square border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-                            <input type="file" accept="image/*" multiple @change="handleSkyPhotos" class="absolute inset-0 opacity-0">
+                            <input type="file" accept="image/*" multiple @change="handleSkyPhotos" class="absolute inset-0 opacity-0 cursor-pointer">
                             <span class="text-2xl text-slate-300">+</span>
                         </div>
                     </div>
-                    <textarea v-model="answers.skyNote" class="mt-4 w-full rounded-2xl p-4 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 outline-none dark:text-white" rows="2" placeholder="同步關於這片天空的隨手筆記..."></textarea>
+                    <textarea v-model="answers.skyNote" class="mt-4 w-full rounded-2xl p-4 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 outline-none dark:text-white" rows="2" placeholder="紀錄關於這片天空的隨手筆記..."></textarea>
                 </section>
 
                 <section class="bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] card-shadow border border-slate-50 dark:border-slate-700">
@@ -89,30 +113,30 @@
                             <button @click="lifePhotos.splice(idx, 1)" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs">×</button>
                         </div>
                         <div class="relative aspect-square border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-                            <input type="file" accept="image/*" multiple @change="handleLifePhotos" class="absolute inset-0 opacity-0">
+                            <input type="file" accept="image/*" multiple @change="handleLifePhotos" class="absolute inset-0 opacity-0 cursor-pointer">
                             <span class="text-2xl text-slate-300">+</span>
                         </div>
                     </div>
-                    <textarea v-model="answers.lifeNote" class="mt-4 w-full rounded-2xl p-4 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 outline-none dark:text-white" rows="4" placeholder="今日在生活中發現了什麼有趣或值得紀錄的小事？（文字將自動同步備份）"></textarea>
+                    <textarea v-model="answers.lifeNote" class="mt-4 w-full rounded-2xl p-4 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 outline-none dark:text-white" rows="4" placeholder="今日生活中發現了什麼有趣或值得紀錄的小事？"></textarea>
                 </section>
 
                 <div class="pt-4">
                     <button @click="submitAll" :disabled="uploading || !isFormValid" class="w-full bg-blue-600 text-white py-5 rounded-[2.5rem] font-black shadow-xl active:scale-95 disabled:bg-slate-300 transition-all">
-                        {{ uploading ? '同步中...' : (isTodayCompleted ? '追加今日筆記/相片' : '儲存今日圖文') }}
+                        {{ uploading ? '同步中...' : (isTodayCompleted ? '追加今日筆記' : '完成今日同步') }}
                     </button>
-                    <button @click="logout" class="w-full mt-8 text-[10px] text-slate-400 font-bold hover:text-red-400 uppercase tracking-widest">Logout</button>
+                    <button @click="logout" class="w-full mt-8 text-[10px] text-slate-400 font-bold hover:text-red-400 uppercase tracking-widest">Logout System</button>
                 </div>
             </main>
 
             <main v-else class="flex flex-col items-center justify-center py-20"><div class="animate-spin text-3xl mb-4 text-blue-500">⌛</div></main>
 
             <transition name="fade">
-                <div v-if="showSuccessCard" class="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6 backdrop-blur-md">
-                    <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[3rem] overflow-hidden card-shadow animate-bounce-in text-center">
+                <div v-if="showSuccessCard" class="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6 backdrop-blur-md text-center">
+                    <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[3rem] overflow-hidden card-shadow animate-bounce-in">
                         <div class="p-10">
-                            <div class="text-5xl mb-6">🚀</div>
+                            <div class="text-5xl mb-6">🛰️</div>
                             <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2">同步完成</h3>
-                            <p class="text-slate-500 dark:text-slate-400 text-sm mb-8 font-bold">今天的數位紀錄已上傳雲端。<br>別忘了也要寫實體小卡喔！</p>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm mb-8 font-bold">今天的數位紀錄已上傳。<br>記得在實體小卡寫下一題喔！</p>
                             <button @click="closeSuccessCard" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg">關閉</button>
                         </div>
                     </div>
@@ -122,8 +146,8 @@
             <div v-if="activeTip" class="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-6 backdrop-blur-sm text-center">
                 <div class="bg-white dark:bg-slate-800 w-full max-w-xs rounded-[2rem] p-8">
                     <h3 class="font-black text-lg mb-4 text-slate-900 dark:text-white">{{ activeTip === 'sky' ? '☁️ 天空捕手' : '📸 今日生活碎片' }}</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                        {{ activeTip === 'sky' ? '拍攝今日最具代表性的天空景色。' : '紀錄生活中任何讓你有感觸、有趣或違和的瞬間。' }}
+                    <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-bold">
+                        {{ activeTip === 'sky' ? '拍攝今日最有感的天空景色。' : '紀錄生活中任何有趣的瞬間或細節。' }}
                     </p>
                     <button @click="activeTip = null" class="mt-6 w-full py-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl font-bold">了解</button>
                 </div>
@@ -187,13 +211,17 @@
             const pressTimer = vueRef(null);
             const manualOffset = vueRef(parseInt(localStorage.getItem('exp_offset')) || 0);
 
+            const applyTheme = (dark) => {
+                if (dark) document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
+            };
+
             const toggleTheme = () => {
                 isDark.value = !isDark.value;
                 localStorage.setItem('theme', isDark.value ? 'dark' : 'light');
-                document.documentElement.classList.toggle('dark', isDark.value);
+                applyTheme(isDark.value);
             };
 
-            // 熱更新防護
             watch(user, async (newVal) => {
                 if (newVal) {
                     loadingProgress.value = true;
@@ -258,7 +286,7 @@
             };
 
             onMounted(() => {
-                document.documentElement.classList.toggle('dark', isDark.value);
+                applyTheme(isDark.value);
                 setInterval(() => {
                     const d = new Date(new Date().getTime() + (new Date().getTimezoneOffset() * 60000) + (8 * 3600000));
                     currentTime.value = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
