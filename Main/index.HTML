@@ -45,23 +45,13 @@
                 <div class="bg-white dark:bg-slate-800 p-10 rounded-[2.5rem] card-shadow border border-slate-100 dark:border-slate-700">
                     <div class="text-5xl mb-6">🛰️</div>
                     <h1 class="text-3xl font-black mb-2 tracking-tight text-slate-900 dark:text-white">數位探針日誌</h1>
-                    <p class="text-slate-400 mb-10 text-sm">請使用 Google 帳號登入系統</p>
+                    <p class="text-slate-400 mb-10 text-sm">請登入以開始今日紀錄</p>
                     <button @click="login" class="w-full bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-all">進入系統</button>
                 </div>
             </div>
 
             <main v-else-if="!loadingProgress" class="space-y-6">
                 
-                <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-900/30 p-5 rounded-3xl mb-6">
-                    <div class="flex gap-3">
-                        <span class="text-xl">🎴</span>
-                        <div>
-                            <h4 class="text-xs font-black text-amber-900 dark:text-amber-200 uppercase mb-1">實體小卡互動中</h4>
-                            <p class="text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed font-bold">請挑選卡片上你感興趣的問題回答（至少一個），寫在卡片上並拍照上傳；內容太長可寫在背面。</p>
-                        </div>
-                    </div>
-                </div>
-
                 <section class="bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] card-shadow border border-slate-50 dark:border-slate-700">
                     <div class="flex justify-between items-center mb-3">
                         <div class="flex items-center gap-2">
@@ -81,13 +71,13 @@
                             <span class="text-2xl text-slate-300">+</span>
                         </div>
                     </div>
-                    <textarea v-model="answers.skyNote" class="mt-4 w-full rounded-2xl p-4 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 outline-none dark:text-white" rows="2" placeholder="同步關於這張天空的筆記..."></textarea>
+                    <textarea v-model="answers.skyNote" class="mt-4 w-full rounded-2xl p-4 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 outline-none dark:text-white" rows="2" placeholder="同步關於這片天空的隨手筆記..."></textarea>
                 </section>
 
                 <section class="bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] card-shadow border border-slate-50 dark:border-slate-700">
                     <div class="flex justify-between items-center mb-3">
                         <div class="flex items-center gap-2">
-                            <h3 class="font-black text-slate-800 dark:text-slate-100 text-sm">📸 任務二：碎片與小卡回答</h3>
+                            <h3 class="font-black text-slate-800 dark:text-slate-100 text-sm">📸 任務二：今日生活碎片</h3>
                             <button @click="showTips('life')" class="tips-btn">?</button>
                         </div>
                         <span v-if="isTodayCompleted" class="done-tag">已同步</span>
@@ -103,25 +93,26 @@
                             <span class="text-2xl text-slate-300">+</span>
                         </div>
                     </div>
-                    <textarea v-model="answers.lifeNote" class="mt-4 w-full rounded-2xl p-4 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 outline-none dark:text-white" rows="2" placeholder="挑選一個卡片上的問題回答，或紀錄生活感觸..."></textarea>
+                    <textarea v-model="answers.lifeNote" class="mt-4 w-full rounded-2xl p-4 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 outline-none dark:text-white" rows="4" placeholder="今日在生活中發現了什麼有趣或值得紀錄的小事？（文字將自動同步備份）"></textarea>
                 </section>
 
                 <div class="pt-4">
-                    <button @click="submitAll" :disabled="uploading || !isFormValid" class="w-full bg-blue-600 text-white py-5 rounded-[2rem] font-black shadow-xl active:scale-95 disabled:bg-slate-300 transition-all">
-                        {{ uploading ? '同步中...' : (isTodayCompleted ? '追加今日紀錄' : '完成今日同步') }}
+                    <button @click="submitAll" :disabled="uploading || !isFormValid" class="w-full bg-blue-600 text-white py-5 rounded-[2.5rem] font-black shadow-xl active:scale-95 disabled:bg-slate-300 transition-all">
+                        {{ uploading ? '同步中...' : (isTodayCompleted ? '追加今日筆記/相片' : '儲存今日圖文') }}
                     </button>
-                    <button @click="logout" class="w-full mt-8 text-[10px] text-slate-400 font-bold hover:text-red-400 uppercase tracking-widest">Logout System</button>
+                    <button @click="logout" class="w-full mt-8 text-[10px] text-slate-400 font-bold hover:text-red-400 uppercase tracking-widest">Logout</button>
                 </div>
             </main>
+
+            <main v-else class="flex flex-col items-center justify-center py-20"><div class="animate-spin text-3xl mb-4 text-blue-500">⌛</div></main>
 
             <transition name="fade">
                 <div v-if="showSuccessCard" class="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6 backdrop-blur-md">
                     <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[3rem] overflow-hidden card-shadow animate-bounce-in text-center">
-                        <div class="bg-blue-600 h-2 bg-gradient-to-r from-blue-400 to-blue-600"></div>
                         <div class="p-10">
-                            <div class="text-5xl mb-6">✅</div>
-                            <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2">同步成功</h3>
-                            <p class="text-slate-500 dark:text-slate-400 text-sm mb-8 font-bold">數位與實體數據已對齊。<br>別忘了在實體小卡標註進度！</p>
+                            <div class="text-5xl mb-6">🚀</div>
+                            <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2">同步完成</h3>
+                            <p class="text-slate-500 dark:text-slate-400 text-sm mb-8 font-bold">今天的數位紀錄已上傳雲端。<br>別忘了也要寫實體小卡喔！</p>
                             <button @click="closeSuccessCard" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg">關閉</button>
                         </div>
                     </div>
@@ -130,11 +121,22 @@
 
             <div v-if="activeTip" class="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-6 backdrop-blur-sm text-center">
                 <div class="bg-white dark:bg-slate-800 w-full max-w-xs rounded-[2rem] p-8">
-                    <h3 class="font-black text-lg mb-4 text-slate-900 dark:text-white">{{ activeTip === 'sky' ? '☁️ 天空捕手' : '📸 碎片與小卡' }}</h3>
+                    <h3 class="font-black text-lg mb-4 text-slate-900 dark:text-white">{{ activeTip === 'sky' ? '☁️ 天空捕手' : '📸 今日生活碎片' }}</h3>
                     <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                        {{ activeTip === 'sky' ? '拍攝今日讓你最有感觸的天空。' : '挑選實體小卡上感興趣的問題回答並拍照。' }}
+                        {{ activeTip === 'sky' ? '拍攝今日最具代表性的天空景色。' : '紀錄生活中任何讓你有感觸、有趣或違和的瞬間。' }}
                     </p>
                     <button @click="activeTip = null" class="mt-6 w-full py-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl font-bold">了解</button>
+                </div>
+            </div>
+
+            <div v-if="showSettings" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-6 backdrop-blur-sm">
+                <div class="bg-white dark:bg-slate-800 w-full max-w-xs rounded-[2.5rem] p-8 shadow-2xl text-center">
+                    <h3 class="font-black text-xl mb-6 dark:text-white">實驗室控制台</h3>
+                    <div class="grid grid-cols-4 gap-2 mb-8">
+                        <button v-for="d in 7" @click="setDay(d)" class="py-3 rounded-xl text-xs font-black transition-all" :class="currentDayNumber === d ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-400'">D{{d}}</button>
+                    </div>
+                    <button @click="resetExperiment" class="w-full py-4 bg-red-50 text-red-500 rounded-2xl font-black mb-2 text-sm">重製本地快取</button>
+                    <button @click="showSettings = false" class="w-full py-2 text-slate-400 text-xs font-bold">關閉</button>
                 </div>
             </div>
 
@@ -191,6 +193,7 @@
                 document.documentElement.classList.toggle('dark', isDark.value);
             };
 
+            // 熱更新防護
             watch(user, async (newVal) => {
                 if (newVal) {
                     loadingProgress.value = true;
@@ -220,11 +223,9 @@
                 return day > 7 ? 7 : (day < 1 ? 1 : day);
             });
 
-            // 💡 修正驗證邏輯：確保註解有值也能觸發
             const isFormValid = computed(() => {
-                const hasNewContent = skyPhotos.value.length > 0 || lifePhotos.value.length > 0 || answers.value.skyNote.trim() !== "" || answers.value.lifeNote.trim() !== "";
-                if (isTodayCompleted.value) return hasNewContent;
-                // 首次提交必須有照片
+                const hasNew = skyPhotos.value.length > 0 || lifePhotos.value.length > 0 || answers.value.skyNote.trim() !== "" || answers.value.lifeNote.trim() !== "";
+                if (isTodayCompleted.value) return hasNew;
                 return skyPhotos.value.length > 0 && lifePhotos.value.length > 0;
             });
 
@@ -241,24 +242,19 @@
                 const finalLifeNote = mergeNote(oldNotes.value.life, answers.value.lifeNote);
 
                 try {
-                    // 同步到 GAS
                     await fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ userName: user.value.displayName, date: dateLabel, skyPhotos: skyPhotos.value, lifePhotos: lifePhotos.value, skyNote: finalSkyNote, lifeNote: finalLifeNote }) });
-                    
-                    // 同步到 Firebase
                     const dataToSave = {
                         dayNumber: currentDayNumber.value, date: dateLabel,
                         skyNote: finalSkyNote, lifeNote: finalLifeNote,
                         userName: user.value.displayName, createdAt: serverTimestamp()
                     };
-
                     await setDoc(doc(db, "probes", user.value.displayName, "daily_logs", `Day${currentDayNumber.value}_${dateLabel}`), dataToSave, { merge: true });
-
                     isTodayCompleted.value = true;
                     oldNotes.value = { sky: finalSkyNote, life: finalLifeNote };
                     showSuccessCard.value = true;
                     answers.value = { skyNote: "", lifeNote: "" };
                     skyPhotos.value = []; lifePhotos.value = [];
-                } catch (e) { alert("同步失敗"); } finally { uploading.value = false; }
+                } catch (e) { alert("同步錯誤"); } finally { uploading.value = false; }
             };
 
             onMounted(() => {
