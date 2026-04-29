@@ -21,7 +21,6 @@
         .fade-enter-from, .fade-leave-to { opacity: 0; }
         @keyframes bounce-in { 0% { transform: scale(0.9); opacity: 0; } 70% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
         .animate-bounce-in { animation: bounce-in 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        /* 說明框特殊樣式 */
         .instruction-box { border: 1.5px solid #e2e8f0; background: linear-gradient(to bottom right, #ffffff, #f8fafc); }
         .dark .instruction-box { border-color: #334155; background: linear-gradient(to bottom right, #1e293b, #0f172a); }
     </style>
@@ -30,31 +29,57 @@
     <div id="app" class="min-h-screen bg-[#F8FAFC] dark:bg-[#0F172A] text-slate-800 dark:text-slate-200 no-select font-sans">
         <div class="max-w-md mx-auto p-6 pb-24">
             
-            <header v-if="user" class="flex justify-between items-start mb-8">
+            <header v-if="user && !showArchive" class="flex justify-between items-start mb-8">
                 <div>
                     <h2 @mousedown="startLongPress" @mouseup="endLongPress" @touchstart="startLongPress" @touchend="endLongPress" class="text-2xl font-black text-slate-900 dark:text-white leading-none mb-2">{{ user.displayName }}</h2>
                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Taipei Time: {{ currentTime }}</p>
                 </div>
                 <div class="flex flex-col items-end gap-3">
-                    <button @click="toggleTheme" class="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 text-lg">{{ isDark ? '🌙' : '☀️' }}</button>
+                    <div class="flex gap-2">
+                        <button @click="openArchive" class="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 text-lg">📖</button>
+                        <button @click="toggleTheme" class="w-10 h-10 flex items-center justify-center bg-white dark:bg-slate-800 rounded-full shadow-sm border border-slate-100 dark:border-slate-700 text-lg">{{ isDark ? '🌙' : '☀️' }}</button>
+                    </div>
                     <div class="flex flex-col items-end gap-1">
-                        <span class="inline-block bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-lg shadow-blue-500/30">Day {{ currentDayNumber }}</span>
-                        <span v-if="isTodayCompleted" class="done-tag">今日已完成同步</span>
+                        <span class="inline-block bg-blue-600 text-white px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">Day {{ currentDayNumber }}</span>
                     </div>
                 </div>
             </header>
 
-            <div v-if="!user" class="flex flex-col items-center justify-center h-[80vh] text-center">
-                <div class="bg-white dark:bg-slate-800 p-10 rounded-[2.5rem] card-shadow border border-slate-100 dark:border-slate-700">
-                    <div class="text-5xl mb-6">🛰️</div>
-                    <h1 class="text-3xl font-black mb-2 tracking-tight text-slate-900 dark:text-white">數位探針日誌</h1>
-                    <p class="text-slate-400 mb-10 text-sm">請登入以開始今日紀錄</p>
-                    <button @click="login" class="w-full bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-all">進入系統</button>
+            <div v-if="!user">
+                <div class="flex flex-col items-center justify-center h-[80vh] text-center">
+                    <div class="bg-white dark:bg-slate-800 p-10 rounded-[2.5rem] card-shadow border border-slate-100 dark:border-slate-700">
+                        <div class="text-5xl mb-6 text-slate-900 dark:text-white">🛰️</div>
+                        <h1 class="text-3xl font-black mb-2 tracking-tight text-slate-900 dark:text-white">數位探針日誌</h1>
+                        <p class="text-slate-400 mb-10 text-sm">登入以開始紀錄</p>
+                        <button @click="login" class="w-full bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-all">進入系統</button>
+                    </div>
                 </div>
             </div>
 
-            <main v-else-if="!loadingProgress" class="space-y-6">
+            <main v-else-if="showArchive" class="space-y-8 animate-fade-in">
+                <header class="flex justify-between items-center mb-6">
+                    <button @click="showArchive = false" class="text-blue-600 font-black text-sm">← 返回紀錄</button>
+                    <h3 class="font-black text-lg">數位回憶錄</h3>
+                </header>
                 
+                <div v-if="archiveLoading" class="flex justify-center py-20"><div class="animate-spin text-2xl">⌛</div></div>
+                <div v-else-if="archives.length === 0" class="text-center py-20 opacity-40 text-sm">目前尚無歷史紀錄</div>
+                
+                <div v-else class="space-y-12">
+                    <div v-for="log in archives" :key="log.date" class="relative pl-6 border-l-2 border-slate-200 dark:border-slate-700">
+                        <div class="absolute -left-[9px] top-0 w-4 h-4 bg-blue-600 rounded-full border-4 border-white dark:border-slate-900 shadow-sm"></div>
+                        <p class="text-[10px] font-black text-blue-600 uppercase mb-2 tracking-widest">Day {{ log.dayNumber }} • {{ log.date }}</p>
+                        
+                        <div class="bg-white dark:bg-slate-800 p-6 rounded-[2rem] card-shadow border border-slate-50 dark:border-slate-700 space-y-4">
+                            <div v-if="log.skyNote" class="text-xs leading-relaxed italic opacity-80 border-l-2 border-slate-200 dark:border-slate-700 pl-3">{{ log.skyNote }}</div>
+                            <div v-if="log.lifeNote" class="text-xs leading-relaxed">{{ log.lifeNote }}</div>
+                            <div class="text-[9px] opacity-40 text-right">同步於 {{ log.date }}</div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <main v-else-if="!loadingProgress" class="space-y-6">
                 <section class="instruction-box p-6 rounded-[2rem] card-shadow">
                     <div class="flex items-center gap-3 mb-4">
                         <span class="text-2xl">🎴</span>
@@ -63,35 +88,24 @@
                     <ul class="space-y-3">
                         <li class="flex items-start gap-3">
                             <span class="text-[10px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">1</span>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-bold">每天請從實體小卡中，挑選一個您感興趣的問題進行簡短回答。</p>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-bold">請挑選小卡上感興趣的問題回答，寫在卡片上即可（天至少一題，亦可回答多個問題）。</p>
                         </li>
                         <li class="flex items-start gap-3">
                             <span class="text-[10px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">2</span>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-bold">只需寫下答案即可，不需拍照上傳小卡；內容較長時可書寫於小卡背面。</p>
-                        </li>
-                        <li class="flex items-start gap-3">
-                            <span class="text-[10px] bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 font-bold">3</span>
-                            <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-bold italic opacity-75">數位工具包（本網頁）將同步備份您的視覺紀錄與今日心情。</p>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed font-bold">內容較長時可書寫於小卡背面；不需對卡片拍照上傳。</p>
                         </li>
                     </ul>
                 </section>
 
                 <section class="bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] card-shadow border border-slate-50 dark:border-slate-700">
-                    <div class="flex justify-between items-center mb-3">
-                        <div class="flex items-center gap-2">
-                            <h3 class="font-black text-slate-800 dark:text-slate-100 text-sm">☁️ 任務一：天空捕手</h3>
-                            <button @click="showTips('sky')" class="tips-btn">?</button>
-                        </div>
-                        <span v-if="isTodayCompleted" class="done-tag">已同步</span>
-                        <span v-else class="required-tag">必填</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2 mt-4">
+                    <h3 class="font-black text-sm mb-4">☁️ 任務一：天空捕手</h3>
+                    <div class="grid grid-cols-3 gap-2">
                         <div v-for="(img, idx) in skyPhotos" :key="idx" class="relative aspect-square">
                             <img :src="img" class="w-full h-full object-cover rounded-xl shadow-inner">
                             <button @click="skyPhotos.splice(idx, 1)" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs">×</button>
                         </div>
                         <div class="relative aspect-square border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-                            <input type="file" accept="image/*" multiple @change="handleSkyPhotos" class="absolute inset-0 opacity-0 cursor-pointer">
+                            <input type="file" accept="image/*" multiple @change="handleSkyPhotos" class="absolute inset-0 opacity-0">
                             <span class="text-2xl text-slate-300">+</span>
                         </div>
                     </div>
@@ -99,21 +113,14 @@
                 </section>
 
                 <section class="bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] card-shadow border border-slate-50 dark:border-slate-700">
-                    <div class="flex justify-between items-center mb-3">
-                        <div class="flex items-center gap-2">
-                            <h3 class="font-black text-slate-800 dark:text-slate-100 text-sm">📸 任務二：今日生活碎片</h3>
-                            <button @click="showTips('life')" class="tips-btn">?</button>
-                        </div>
-                        <span v-if="isTodayCompleted" class="done-tag">已同步</span>
-                        <span v-else class="required-tag">必填</span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2 mt-4">
+                    <h3 class="font-black text-sm mb-4">📸 任務二：今日生活碎片</h3>
+                    <div class="grid grid-cols-3 gap-2">
                         <div v-for="(img, idx) in lifePhotos" :key="idx" class="relative aspect-square">
                             <img :src="img" class="w-full h-full object-cover rounded-xl shadow-inner">
                             <button @click="lifePhotos.splice(idx, 1)" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs">×</button>
                         </div>
                         <div class="relative aspect-square border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-                            <input type="file" accept="image/*" multiple @change="handleLifePhotos" class="absolute inset-0 opacity-0 cursor-pointer">
+                            <input type="file" accept="image/*" multiple @change="handleLifePhotos" class="absolute inset-0 opacity-0">
                             <span class="text-2xl text-slate-300">+</span>
                         </div>
                     </div>
@@ -124,45 +131,11 @@
                     <button @click="submitAll" :disabled="uploading || !isFormValid" class="w-full bg-blue-600 text-white py-5 rounded-[2.5rem] font-black shadow-xl active:scale-95 disabled:bg-slate-300 transition-all">
                         {{ uploading ? '同步中...' : (isTodayCompleted ? '追加今日筆記' : '完成今日同步') }}
                     </button>
-                    <button @click="logout" class="w-full mt-8 text-[10px] text-slate-400 font-bold hover:text-red-400 uppercase tracking-widest">Logout System</button>
+                    <button @click="logout" class="w-full mt-8 text-[10px] text-slate-400 font-bold hover:text-red-400 uppercase tracking-widest">Logout</button>
                 </div>
             </main>
 
             <main v-else class="flex flex-col items-center justify-center py-20"><div class="animate-spin text-3xl mb-4 text-blue-500">⌛</div></main>
-
-            <transition name="fade">
-                <div v-if="showSuccessCard" class="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6 backdrop-blur-md text-center">
-                    <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[3rem] overflow-hidden card-shadow animate-bounce-in">
-                        <div class="p-10">
-                            <div class="text-5xl mb-6">🛰️</div>
-                            <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2">同步完成</h3>
-                            <p class="text-slate-500 dark:text-slate-400 text-sm mb-8 font-bold">今天的數位紀錄已上傳。<br>記得在實體小卡寫下一題喔！</p>
-                            <button @click="closeSuccessCard" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg">關閉</button>
-                        </div>
-                    </div>
-                </div>
-            </transition>
-
-            <div v-if="activeTip" class="fixed inset-0 bg-black/60 z-[60] flex items-center justify-center p-6 backdrop-blur-sm text-center">
-                <div class="bg-white dark:bg-slate-800 w-full max-w-xs rounded-[2rem] p-8">
-                    <h3 class="font-black text-lg mb-4 text-slate-900 dark:text-white">{{ activeTip === 'sky' ? '☁️ 天空捕手' : '📸 今日生活碎片' }}</h3>
-                    <p class="text-sm text-slate-500 dark:text-slate-400 leading-relaxed font-bold">
-                        {{ activeTip === 'sky' ? '拍攝今日最有感的天空景色。' : '紀錄生活中任何有趣的瞬間或細節。' }}
-                    </p>
-                    <button @click="activeTip = null" class="mt-6 w-full py-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl font-bold">了解</button>
-                </div>
-            </div>
-
-            <div v-if="showSettings" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-6 backdrop-blur-sm">
-                <div class="bg-white dark:bg-slate-800 w-full max-w-xs rounded-[2.5rem] p-8 shadow-2xl text-center">
-                    <h3 class="font-black text-xl mb-6 dark:text-white">實驗室控制台</h3>
-                    <div class="grid grid-cols-4 gap-2 mb-8">
-                        <button v-for="d in 7" @click="setDay(d)" class="py-3 rounded-xl text-xs font-black transition-all" :class="currentDayNumber === d ? 'bg-blue-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-400'">D{{d}}</button>
-                    </div>
-                    <button @click="resetExperiment" class="w-full py-4 bg-red-50 text-red-500 rounded-2xl font-black mb-2 text-sm">重製本地快取</button>
-                    <button @click="showSettings = false" class="w-full py-2 text-slate-400 text-xs font-bold">關閉</button>
-                </div>
-            </div>
 
         </div>
     </div>
@@ -199,27 +172,34 @@
             const isTodayCompleted = vueRef(false);
             const dbDayNumber = vueRef(1);
             const oldNotes = vueRef({ sky: "", life: "" });
-            
             const skyPhotos = vueRef([]);
             const lifePhotos = vueRef([]);
             const answers = vueRef({ skyNote: "", lifeNote: "" });
-            
             const showSettings = vueRef(false);
-            const showSuccessCard = vueRef(false);
-            const activeTip = vueRef(null);
             const currentTime = vueRef("");
             const pressTimer = vueRef(null);
             const manualOffset = vueRef(parseInt(localStorage.getItem('exp_offset')) || 0);
 
-            const applyTheme = (dark) => {
-                if (dark) document.documentElement.classList.add('dark');
-                else document.documentElement.classList.remove('dark');
-            };
+            // 💡 回憶錄相關變數
+            const showArchive = vueRef(false);
+            const archiveLoading = vueRef(false);
+            const archives = vueRef([]);
 
             const toggleTheme = () => {
                 isDark.value = !isDark.value;
                 localStorage.setItem('theme', isDark.value ? 'dark' : 'light');
-                applyTheme(isDark.value);
+                document.documentElement.classList.toggle('dark', isDark.value);
+            };
+
+            const openArchive = async () => {
+                showArchive.value = true;
+                archiveLoading.value = true;
+                try {
+                    const q = query(collection(db, "probes", user.value.displayName, "daily_logs"), orderBy("dayNumber", "asc"));
+                    const querySnapshot = await getDocs(q);
+                    archives.value = querySnapshot.docs.map(doc => doc.data());
+                } catch (e) { console.error(e); }
+                archiveLoading.value = false;
             };
 
             watch(user, async (newVal) => {
@@ -246,15 +226,9 @@
                 }
             });
 
-            const currentDayNumber = computed(() => {
-                let day = dbDayNumber.value + manualOffset.value;
-                return day > 7 ? 7 : (day < 1 ? 1 : day);
-            });
-
             const isFormValid = computed(() => {
                 const hasNew = skyPhotos.value.length > 0 || lifePhotos.value.length > 0 || answers.value.skyNote.trim() !== "" || answers.value.lifeNote.trim() !== "";
-                if (isTodayCompleted.value) return hasNew;
-                return skyPhotos.value.length > 0 && lifePhotos.value.length > 0;
+                return isTodayCompleted.value ? hasNew : (skyPhotos.value.length > 0 && lifePhotos.value.length > 0);
             });
 
             const submitAll = async () => {
@@ -272,39 +246,39 @@
                 try {
                     await fetch(GAS_URL, { method: "POST", mode: "no-cors", body: JSON.stringify({ userName: user.value.displayName, date: dateLabel, skyPhotos: skyPhotos.value, lifePhotos: lifePhotos.value, skyNote: finalSkyNote, lifeNote: finalLifeNote }) });
                     const dataToSave = {
-                        dayNumber: currentDayNumber.value, date: dateLabel,
+                        dayNumber: dbDayNumber.value + manualOffset.value, date: dateLabel,
                         skyNote: finalSkyNote, lifeNote: finalLifeNote,
                         userName: user.value.displayName, createdAt: serverTimestamp()
                     };
-                    await setDoc(doc(db, "probes", user.value.displayName, "daily_logs", `Day${currentDayNumber.value}_${dateLabel}`), dataToSave, { merge: true });
+                    await setDoc(doc(db, "probes", user.value.displayName, "daily_logs", `Day${dataToSave.dayNumber}_${dateLabel}`), dataToSave, { merge: true });
                     isTodayCompleted.value = true;
                     oldNotes.value = { sky: finalSkyNote, life: finalLifeNote };
-                    showSuccessCard.value = true;
                     answers.value = { skyNote: "", lifeNote: "" };
                     skyPhotos.value = []; lifePhotos.value = [];
+                    alert("同步完成！別忘了寫實體卡片喔！");
                 } catch (e) { alert("同步錯誤"); } finally { uploading.value = false; }
             };
 
             onMounted(() => {
-                applyTheme(isDark.value);
+                document.documentElement.classList.toggle('dark', isDark.value);
                 setInterval(() => {
                     const d = new Date(new Date().getTime() + (new Date().getTimezoneOffset() * 60000) + (8 * 3600000));
                     currentTime.value = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}:${d.getSeconds().toString().padStart(2, '0')}`;
                 }, 1000);
             });
 
-            onAuthStateChanged(auth, (u) => { user.value = u; });
             return { 
-                user, login: () => signInWithPopup(auth, provider), logout: () => signOut(auth), 
-                currentDayNumber, answers, skyPhotos, lifePhotos, uploading, submitAll, 
+                user, login: () => signInWithPopup(auth, provider), logout: () => { signOut(auth); user.value = null; }, 
+                currentDayNumber: computed(() => dbDayNumber.value + manualOffset.value), 
+                answers, skyPhotos, lifePhotos, uploading, submitAll, 
                 handleSkyPhotos: (e) => Array.from(e.target.files).forEach(file => { const r = new FileReader(); r.onload = (f) => skyPhotos.value.push(f.target.result); r.readAsDataURL(file); }),
                 handleLifePhotos: (e) => Array.from(e.target.files).forEach(file => { const r = new FileReader(); r.onload = (f) => lifePhotos.value.push(f.target.result); r.readAsDataURL(file); }),
                 showSettings, setDay: (d) => { manualOffset.value = d - dbDayNumber.value; localStorage.setItem('exp_offset', manualOffset.value); },
                 resetExperiment: () => { localStorage.clear(); window.location.reload(); },
                 startLongPress: () => pressTimer.value = setTimeout(() => showSettings.value = true, 3000),
                 endLongPress: () => clearTimeout(pressTimer.value),
-                currentTime, isFormValid, showSuccessCard, closeSuccessCard: () => showSuccessCard.value = false, 
-                loadingProgress, isDark, toggleTheme, isTodayCompleted, activeTip, showTips: (t) => activeTip.value = t
+                currentTime, isFormValid, loadingProgress, isDark, toggleTheme, isTodayCompleted,
+                showArchive, archiveLoading, archives, openArchive
             };
         }
     }).mount('#app');
