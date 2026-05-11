@@ -16,7 +16,8 @@
         .done-tag { font-size: 9px; color: #10b981; background: #ecfdf5; padding: 1px 6px; border-radius: 4px; font-weight: bold; }
         .dark .required-tag { color: #64748b; border-color: #334155; }
         .dark .done-tag { color: #34d399; background: #064e3b; }
-        .tips-btn { font-size: 10px; color: #3b82f6; background: #eff6ff; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; }
+        .tips-btn { font-size: 10px; color: #3b82f6; background: #eff6ff; width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+        .tips-btn:active { transform: scale(0.9); background: #dbeafe; }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.5s ease; }
         .fade-enter-from, .fade-leave-to { opacity: 0; }
         @keyframes bounce-in { 0% { transform: scale(0.9); opacity: 0; } 70% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
@@ -102,9 +103,9 @@
                     </section>
 
                     <section class="bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] card-shadow border border-slate-50 dark:border-slate-700">
-                        <div class="flex justify-between items-center mb-3">
+                        <div class="flex justify-between items-center mb-4">
                             <div class="flex items-center gap-2">
-                                <h3 class="font-black text-slate-800 dark:text-slate-100 text-sm">☁️ 任務一：天空捕手</h3>
+                                <h3 class="font-black text-sm">☁️ 任務一：天空捕手</h3>
                                 <button @click="showTips('sky')" class="tips-btn">?</button>
                             </div>
                             <span v-if="isTodayCompleted" class="done-tag">已同步</span>
@@ -116,7 +117,7 @@
                                 <button @click="skyPhotos.splice(idx, 1)" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
                             </div>
                             <div class="relative aspect-square border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-                                <input type="file" accept="image/*" multiple @change="handleSkyPhotos" class="absolute inset-0 opacity-0">
+                                <input type="file" accept="image/*" multiple @change="handleSkyPhotos" class="absolute inset-0 opacity-0 cursor-pointer">
                                 <span class="text-2xl text-slate-300">+</span>
                             </div>
                         </div>
@@ -124,9 +125,9 @@
                     </section>
 
                     <section class="bg-white dark:bg-slate-800 p-6 rounded-[2.5rem] card-shadow border border-slate-50 dark:border-slate-700">
-                        <div class="flex justify-between items-center mb-3">
+                        <div class="flex justify-between items-center mb-4">
                             <div class="flex items-center gap-2">
-                                <h3 class="font-black text-slate-800 dark:text-slate-100 text-sm">📸 任務二：今日生活碎片</h3>
+                                <h3 class="font-black text-sm">📸 任務二：今日生活碎片</h3>
                                 <button @click="showTips('life')" class="tips-btn">?</button>
                             </div>
                             <span v-if="isTodayCompleted" class="done-tag">已同步</span>
@@ -138,7 +139,7 @@
                                 <button @click="lifePhotos.splice(idx, 1)" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">×</button>
                             </div>
                             <div class="relative aspect-square border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-center bg-slate-50 dark:bg-slate-900">
-                                <input type="file" accept="image/*" multiple @change="handleLifePhotos" class="absolute inset-0 opacity-0">
+                                <input type="file" accept="image/*" multiple @change="handleLifePhotos" class="absolute inset-0 opacity-0 cursor-pointer">
                                 <span class="text-2xl text-slate-300">+</span>
                             </div>
                         </div>
@@ -157,10 +158,27 @@
         </div>
 
         <transition name="fade">
+            <div v-if="activeTip" class="fixed inset-0 bg-black/60 z-[200] flex items-center justify-center p-6 backdrop-blur-sm">
+                <div class="bg-white dark:bg-slate-800 w-full max-w-xs rounded-[2rem] p-8 shadow-2xl animate-bounce-in text-center border border-slate-100 dark:border-slate-700">
+                    <div class="text-4xl mb-4">{{ activeTip === 'sky' ? '☁️' : '📸' }}</div>
+                    <h3 class="font-black text-lg mb-2 text-slate-900 dark:text-white">
+                        {{ activeTip === 'sky' ? '天空捕手' : '今日生活碎片' }}
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-bold">
+                        {{ activeTip === 'sky' ? '請捕捉您當下位置的天空。無論陰晴、室內外，不同角度的天空都非常有價值。' : '紀錄今天生活中一個觸動您的瞬間。可以是一個物品、一組場景，或是任何微小的觀察。' }}
+                    </p>
+                    <button @click="activeTip = null" class="mt-6 w-full py-4 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl font-black text-sm active:scale-95 transition-all">
+                        了解
+                    </button>
+                </div>
+            </div>
+        </transition>
+
+        <transition name="fade">
             <div v-if="showSuccessCard" class="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6 backdrop-blur-md text-center">
                 <div class="bg-white dark:bg-slate-800 w-full max-w-sm rounded-[3rem] overflow-hidden card-shadow animate-bounce-in">
                     <div class="p-10">
-                        <img :src="`image/${successImage}`" class="w-full h-48 object-cover rounded-2xl mb-6 shadow-inner">
+                        <img v-if="successImage" :src="`image/${successImage}`" class="w-full h-48 object-cover rounded-2xl mb-6 shadow-inner">
                         <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-2">同步完成</h3>
                         <p class="text-slate-500 dark:text-slate-400 text-sm mb-8 font-bold">紀錄已同步雲端。<br>別忘了在實體小卡標註進度！</p>
                         <button @click="showSuccessCard = false" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-black shadow-lg">關閉</button>
@@ -202,7 +220,7 @@
     const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
-    const { createApp, ref: vueRef, computed, onMounted, watch } = Vue;
+    const { createApp, ref: vueRef, computed, onMounted } = Vue;
 
     createApp({
         setup() {
@@ -222,16 +240,11 @@
             const manualOffset = vueRef(parseInt(localStorage.getItem('exp_offset')) || 0);
             const showSuccessCard = vueRef(false);
             const successImage = vueRef("01.png");
+            const activeTip = vueRef(null);
 
             const showArchive = vueRef(false);
             const archives = vueRef([]);
             const archiveLoading = vueRef(false);
-
-            const toggleTheme = () => {
-                isDark.value = !isDark.value;
-                localStorage.setItem('theme', isDark.value ? 'dark' : 'light');
-                document.documentElement.classList.toggle('dark', isDark.value);
-            };
 
             const syncProgress = async (u) => {
                 loadingProgress.value = true;
@@ -301,7 +314,8 @@
             return { 
                 user, login: () => signInWithPopup(auth, provider), logout: () => { signOut(auth); user.value = null; showArchive.value = false; }, 
                 currentDayNumber: computed(() => dbDayNumber.value + manualOffset.value), 
-                answers, skyPhotos, lifePhotos, uploading, submitAll, 
+                answers, skyPhotos, lifePhotos, uploading, submitAll, activeTip,
+                showTips: (type) => { activeTip.value = type; },
                 isFormValid: computed(() => isTodayCompleted.value ? (skyPhotos.value.length > 0 || lifePhotos.value.length > 0 || answers.value.skyNote.trim() !== "" || answers.value.lifeNote.trim() !== "") : (skyPhotos.value.length > 0 && lifePhotos.value.length > 0)),
                 showArchive, archives, archiveLoading, 
                 openArchive: async () => {
@@ -313,14 +327,14 @@
                     } catch (e) { console.error(e); }
                     archiveLoading.value = false;
                 },
-                toggleTheme, isDark, isTodayCompleted, currentTime, loadingProgress, showSuccessCard, successImage,
+                toggleTheme: () => { isDark.value = !isDark.value; localStorage.setItem('theme', isDark.value ? 'dark' : 'light'); document.documentElement.classList.toggle('dark', isDark.value); },
+                isDark, isTodayCompleted, currentTime, loadingProgress, showSuccessCard, successImage,
                 handleSkyPhotos: (e) => Array.from(e.target.files).forEach(file => { const r = new FileReader(); r.onload = (f) => skyPhotos.value.push(f.target.result); r.readAsDataURL(file); }),
                 handleLifePhotos: (e) => Array.from(e.target.files).forEach(file => { const r = new FileReader(); r.onload = (f) => lifePhotos.value.push(f.target.result); r.readAsDataURL(file); }),
                 showSettings, setDay: (d) => { manualOffset.value = d - dbDayNumber.value; localStorage.setItem('exp_offset', manualOffset.value); },
                 resetExperiment: () => { localStorage.clear(); window.location.reload(); },
                 startLongPress: () => pressTimer.value = setTimeout(() => showSettings.value = true, 3000),
-                endLongPress: () => clearTimeout(pressTimer.value),
-                showTips: (t) => {}
+                endLongPress: () => clearTimeout(pressTimer.value)
             };
         }
     }).mount('#app');
